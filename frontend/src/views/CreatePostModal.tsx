@@ -1,0 +1,136 @@
+import React, { useState, useRef } from 'react'
+import { X, Plus, Loader2 } from 'lucide-react'
+import axios from 'axios'
+import { useAuthStore } from '../store/auth'
+import { API_BASE_URL } from '../config'
+
+interface Props {
+  onClose: () => void
+  onSuccess: () => void
+}
+
+const CreatePostModal = ({ onClose, onSuccess }: Props) => {
+  const [images, setImages] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const token = useAuthStore(state => state.token)
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      setImages(prev => [...prev, ...newFiles])
+      
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+      setPreviews(prev => [...prev, ...newPreviews])
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!content.trim() && images.length === 0) return
+    setIsSubmitting(true)
+
+    try {
+      // 1. Upload Images
+      const imageUrls = []
+      for (const file of images) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        imageUrls.push(res.data.url)
+      }
+
+      // 2. Create Post
+      await axios.post(`${API_BASE_URL}/api/posts`, {
+        title: title || null,
+        content: content,
+        images: imageUrls
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      onSuccess()
+      onClose()
+    } catch (e) {
+      console.error("Post failed", e)
+      alert("Failed to post. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+      {/* Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+        <button onClick={onClose} className="p-2 -ml-2 text-gray-500">
+          <X className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={handleSubmit}
+          disabled={isSubmitting || (!content && images.length === 0)}
+          className="bg-mc-orange text-white px-4 py-1.5 rounded-full text-sm font-bold disabled:opacity-50 flex items-center gap-2"
+        >
+          {isSubmitting && <Loader2 className="w-3 h-3 animate-spin" />}
+          Post
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Image Preview Area */}
+        <div className="flex gap-3 mb-4 overflow-x-auto pb-2 no-scrollbar">
+          {previews.map((src, idx) => (
+            <div key={idx} className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+              <img src={src} className="w-full h-full object-cover" />
+              <button 
+                onClick={() => {
+                    setImages(imgs => imgs.filter((_, i) => i !== idx))
+                    setPreviews(prevs => prevs.filter((_, i) => i !== idx))
+                }}
+                className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 bg-gray-50"
+          >
+            <Plus className="w-6 h-6 mb-1" />
+            <span className="text-xs">Add</span>
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            multiple 
+            accept="image/*" 
+            className="hidden" 
+            onChange={handleFileSelect}
+          />
+        </div>
+
+        {/* Inputs */}
+        <input 
+          value={title} 
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Title (optional)" 
+          className="w-full text-lg font-bold mb-3 outline-none placeholder:text-gray-300"
+        />
+        <textarea 
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          placeholder="Share your moment..." 
+          className="w-full h-40 resize-none outline-none text-base placeholder:text-gray-400"
+        />
+      </div>
+    </div>
+  )
+}
+
+export default CreatePostModal

@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+aiosqlite
+python-jose[cryptography]
+python-dotenv
+google-auth
+requests
+alembic
+pydantic
+google-genai
+asyncpg
+google-cloud-storage
+python-multipart
