@@ -22,7 +22,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 from pydantic import BaseModel
 from database import get_db, engine, Base
-from models import User, Post, Comment, PostLike, PostCollection
+from models import User, Post, Comment, PostLike, PostCollection, AllowedEmail, UserFollow, Notification
 from contextlib import asynccontextmanager
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -133,6 +133,16 @@ class CommentRequest(BaseModel):
     content: str
     parent_id: Optional[int] = None
 
+class UpdatePostRequest(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    title: Optional[str] = None
+    location: Optional[str] = None
+
 async def get_current_user(authorization: str = Header(None), db: AsyncSession = Depends(get_db)):
     if not authorization:
         # For MVP/Testing if auth header missing, try to return first user or error
@@ -152,7 +162,115 @@ async def get_current_user(authorization: str = Header(None), db: AsyncSession =
     except:
         raise HTTPException(status_code=401, detail="Invalid Token")
 
-# ... (Auth & Upload endpoints same as before) ...
+@app.put("/api/posts/{post_id}")
+async def update_post(post_id: int, request: UpdatePostRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
+    
+    if not post:
+        raise HTTPException(404, "Post not found")
+    
+    if post.user_id != user.id:
+        raise HTTPException(403, "Not authorized to edit this post")
+        
+    if request.title is not None:
+        post.title = request.title
+    if request.content is not None:
+        post.content = request.content
+        
+    await db.commit()
+    await db.refresh(post)
+    return post
+
+@app.delete("/api/posts/{post_id}")
+async def delete_post(post_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
+    
+    if not post:
+        raise HTTPException(404, "Post not found")
+    
+    # Allow author OR specific admin (hardcoded for now, or check AllowedEmail role)
+    if post.user_id != user.id:
+        raise HTTPException(403, "Not authorized to delete this post")
+        
+    await db.delete(post)
+    await db.commit()
+    return {"status": "deleted"}
+
+@app.post("/api/users/{target_id}/follow")
+async def follow_user(target_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if target_id == user.id:
+        raise HTTPException(400, "Cannot follow yourself")
+        
+    # Check if already followed
+    res = await db.execute(select(UserFollow).where(UserFollow.follower_id == user.id, UserFollow.followed_id == target_id))
+    if res.scalars().first():
+        return {"status": "already_followed"}
+        
+    new_follow = UserFollow(follower_id=user.id, followed_id=target_id)
+    db.add(new_follow)
+    
+    await create_notification(db, target_id, user.id, "follow")
+    
+    await db.commit()
+    return {"status": "followed"}
+
+@app.delete("/api/users/{target_id}/follow")
+async def unfollow_user(target_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(UserFollow).where(UserFollow.follower_id == user.id, UserFollow.followed_id == target_id))
+    existing = res.scalars().first()
+    
+    if existing:
+        await db.delete(existing)
+        await db.commit()
+        return {"status": "unfollowed"}
+    return {"status": "not_followed"}
+
+@app.get("/api/users/{user_id}/stats")
+async def get_user_stats(user_id: int, db: AsyncSession = Depends(get_db)):
+    # Followers
+    followers = await db.execute(select(func.count()).select_from(UserFollow).where(UserFollow.followed_id == user_id))
+    # Following
+    following = await db.execute(select(func.count()).select_from(UserFollow).where(UserFollow.follower_id == user_id))
+    # Posts
+    posts = await db.execute(select(func.count()).select_from(Post).where(Post.user_id == user_id))
+    
+    return {
+        "followers": followers.scalar(),
+        "following": following.scalar(),
+        "posts": posts.scalar()
+    }
+
+# Update get_my_profile to use real stats
+@app.get("/api/users/me")
+async def get_my_profile(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    stats = await get_user_stats(user.id, db)
+    return {
+        "user": user, # SQLAlchemy object usually serializes fine, but explicit dict is better if Pydantic model
+        "stats": {
+            "posts": stats["posts"],
+            "following": stats["following"],
+            "followers": stats["followers"],
+            "likes_collected": 0 
+        }
+    }
+
+@app.put("/api/users/me")
+async def update_my_profile(request: UpdateProfileRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if request.name is not None:
+        user.name = request.name
+    if request.bio is not None:
+        user.bio = request.bio
+    if request.title is not None:
+        user.title = request.title
+    if request.location is not None:
+        user.location = request.location
+        
+    await db.commit()
+    await db.refresh(user)
+    return user
+
 @app.get("/api/search")
 async def search_posts(q: str, db: AsyncSession = Depends(get_db)):
     """
@@ -251,6 +369,20 @@ async def admin_reindex_images(db: AsyncSession = Depends(get_db)):
 async def create_post(request: CreatePostRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     # Generate AI Keywords on creation
     ai_keywords = ""
+    images = request.images
+    
+    # 1. Image Logic: If empty, use default placeholder
+    if not images:
+        # Use full URL if GCS is configured (future), or relative static path for now
+        # Assuming frontend can handle relative paths or we prepend base URL
+        # To be safe, let's use the full local URL convention or just the path if frontend handles it.
+        # Based on upload_file logic: return {"url": "http://localhost:8000/static/uploads/..."}
+        # But here we just store the string. Frontend usually expects a URL.
+        # Let's verify how MasonryGrid uses it. It uses src={post.images[0]}. 
+        # So we should store a usable URL.
+        # For simplicity in this environment:
+        images = ["/static/default_placeholder.png"]
+    
     if request.images:
         # Run in background in real app, but for MVP await it (might take 2-3s)
         ai_keywords = await analyze_images(request.images)
@@ -259,7 +391,7 @@ async def create_post(request: CreatePostRequest, user: User = Depends(get_curre
         user_id=user.id, 
         title=request.title, 
         content=request.content, 
-        images=request.images,
+        images=images,
         ai_keywords=ai_keywords
     )
     db.add(new_post)
@@ -275,7 +407,24 @@ async def google_auth(request: GoogleAuthRequest, db: AsyncSession = Depends(get
         name = idinfo.get('name', 'Unknown')
         picture = idinfo.get('picture', '')
         google_sub = idinfo['sub']
+        
+        print(f"DEBUG AUTH: Received login attempt for email='{email}'")
 
+        # 1. Check Allowlist (Access Control)
+        # Using case-insensitive match for safety
+        allow_res = await db.execute(select(AllowedEmail).where(AllowedEmail.email == email.lower()))
+        allowed_user = allow_res.scalars().first()
+        
+        if not allowed_user:
+            print(f"DEBUG AUTH: Blocked. '{email.lower()}' NOT found in allowed_emails table.")
+            # Optional: Print all allowed emails to see what's in there
+            # all_allowed = await db.execute(select(AllowedEmail.email))
+            # print(f"DEBUG AUTH: Allowed list: {all_allowed.scalars().all()}")
+            raise HTTPException(status_code=403, detail="Access Denied: You are not in the authorized employee list.")
+        
+        print(f"DEBUG AUTH: Success. Found match: {allowed_user.email}")
+
+        # 2. Proceed with User Creation/Update
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalars().first()
         
@@ -521,7 +670,15 @@ async def enrich_posts_with_likes(db: AsyncSession, posts: List[Post]):
 
 
 
-async def get_feed(db: AsyncSession = Depends(get_db)):
+
+
+
+
+async def get_feed(limit: int = 20, offset: int = 0, db: AsyncSession = Depends(get_db)):
+
+
+
+
 
 
 
@@ -529,7 +686,15 @@ async def get_feed(db: AsyncSession = Depends(get_db)):
 
 
 
+
+
+
+
         select(Post)
+
+
+
+
 
 
 
@@ -537,7 +702,31 @@ async def get_feed(db: AsyncSession = Depends(get_db)):
 
 
 
+
+
+
+
         .order_by(Post.created_at.desc())
+
+
+
+
+
+
+
+        .offset(offset)
+
+
+
+
+
+
+
+        .limit(limit)
+
+
+
+
 
 
 
@@ -545,7 +734,15 @@ async def get_feed(db: AsyncSession = Depends(get_db)):
 
 
 
+
+
+
+
     posts = result.scalars().all()
+
+
+
+
 
 
 
@@ -698,49 +895,23 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 @app.post("/api/posts/{post_id}/like")
-
-
-
 async def toggle_like(post_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-
-
-
     result = await db.execute(select(PostLike).where(PostLike.post_id == post_id, PostLike.user_id == user.id))
-
-
-
     existing = result.scalars().first()
 
-
-
     if existing:
-
-
-
         await db.delete(existing)
-
-
-
         liked = False
-
-
-
     else:
-
-
-
         db.add(PostLike(post_id=post_id, user_id=user.id))
-
-
-
         liked = True
-
-
+        
+        # Notify Author
+        post = await db.get(Post, post_id)
+        if post:
+            await create_notification(db, post.user_id, user.id, "like", post_id)
 
     await db.commit()
-
-
-
     return {"liked": liked}
 
 
@@ -809,39 +980,39 @@ async def add_comment(post_id: int, request: CommentRequest, user: User = Depend
 
 
 
-    comment = Comment(post_id=post_id, user_id=user.id, content=request.content, parent_id=request.parent_id)
+        comment = Comment(post_id=post_id, user_id=user.id, content=request.content, parent_id=request.parent_id)
 
 
 
-    db.add(comment)
+        db.add(comment)
 
 
 
-    await db.commit()
+        
 
 
 
-    await db.refresh(comment)
+        # Notify Post Author
 
 
 
-    return {"status": "ok"}
+        post = await db.get(Post, post_id)
 
 
 
+        if post:
 
 
 
-
-@app.get("/api/users/me")
-
-
-
-async def get_my_profile(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+            await create_notification(db, post.user_id, user.id, "comment", post_id)
 
 
 
-    post_count = await db.execute(select(func.count()).select_from(Post).where(Post.user_id == user.id))
+        
+
+
+
+        # If reply, Notify Comment Parent Author (Optional, simplified for now)
 
 
 
@@ -849,39 +1020,23 @@ async def get_my_profile(user: User = Depends(get_current_user), db: AsyncSessio
 
 
 
-    return {
+        await db.commit()
 
 
 
-        "user": user,
+        await db.refresh(comment)
 
 
 
-        "stats": {
+        return {"status": "ok"}
 
 
 
-            "posts": post_count.scalar(),
 
 
 
-            "following": 42, # Mock
 
 
-
-            "followers": 108, # Mock
-
-
-
-            "likes_collected": 890 # Mock
-
-
-
-        }
-
-
-
-    }
 
 
 
@@ -985,7 +1140,15 @@ async def get_my_collections(user: User = Depends(get_current_user), db: AsyncSe
 
 
 
+
+
+
+
 async def get_my_likes(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+
+
+
+
 
 
 
@@ -993,7 +1156,15 @@ async def get_my_likes(user: User = Depends(get_current_user), db: AsyncSession 
 
 
 
+
+
+
+
         select(Post)
+
+
+
+
 
 
 
@@ -1001,7 +1172,15 @@ async def get_my_likes(user: User = Depends(get_current_user), db: AsyncSession 
 
 
 
+
+
+
+
         .where(PostLike.user_id == user.id)
+
+
+
+
 
 
 
@@ -1009,7 +1188,15 @@ async def get_my_likes(user: User = Depends(get_current_user), db: AsyncSession 
 
 
 
+
+
+
+
         .order_by(PostLike.post_id.desc())
+
+
+
+
 
 
 
@@ -1017,11 +1204,424 @@ async def get_my_likes(user: User = Depends(get_current_user), db: AsyncSession 
 
 
 
+
+
+
+
     posts = result.scalars().all()
 
 
 
+
+
+
+
     return await enrich_posts_with_likes(db, posts)
+
+@app.get("/api/users/{user_id}")
+async def get_user_profile(user_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    # 1. Fetch User
+    res = await db.execute(select(User).where(User.id == user_id))
+    target_user = res.scalars().first()
+    if not target_user:
+        raise HTTPException(404, "User not found")
+
+    # 2. Fetch Stats
+    stats = await get_user_stats(user_id, db)
+    
+    # 3. Check is_following
+    follow_res = await db.execute(select(UserFollow).where(UserFollow.follower_id == current_user.id, UserFollow.followed_id == user_id))
+    is_following = follow_res.scalars().first() is not None
+
+    return {
+        "user": target_user,
+        "stats": {
+            "posts": stats["posts"],
+            "following": stats["following"],
+            "followers": stats["followers"],
+            "likes_collected": 0 # TODO: Implement real count if needed
+        },
+        "is_following": is_following
+    }
+
+@app.get("/api/users/{user_id}/posts")
+async def get_user_posts(user_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Post)
+        .where(Post.user_id == user_id)
+        .options(selectinload(Post.author))
+        .order_by(Post.created_at.desc())
+    )
+    posts = result.scalars().all()
+    return await enrich_posts_with_likes(db, posts)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# --- Notification Logic ---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async def create_notification(db: AsyncSession, receiver_id: int, sender_id: int, type: str, post_id: int = None):
+
+
+
+
+
+
+
+    if receiver_id == sender_id:
+
+
+
+
+
+
+
+        return # Don't notify self actions
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+    # Optional: Check for duplicate recent notifications to avoid spam
+
+
+
+
+
+
+
+    # For now, just create
+
+
+
+
+
+
+
+    notif = Notification(user_id=receiver_id, sender_id=sender_id, type=type, post_id=post_id)
+
+
+
+
+
+
+
+    db.add(notif)
+
+
+
+
+
+
+
+    # We don't commit here, let the caller commit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.get("/api/notifications")
+
+
+
+
+
+
+
+async def get_notifications(limit: int = 20, offset: int = 0, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+
+
+
+
+
+
+
+    # 1. Get List
+
+
+
+
+
+
+
+    res = await db.execute(
+
+
+
+
+
+
+
+        select(Notification)
+
+
+
+
+
+
+
+        .where(Notification.user_id == user.id)
+
+
+
+
+
+
+
+        .options(selectinload(Notification.sender), selectinload(Notification.post))
+
+
+
+
+
+
+
+        .order_by(Notification.created_at.desc())
+
+
+
+
+
+
+
+        .offset(offset)
+
+
+
+
+
+
+
+        .limit(limit)
+
+
+
+
+
+
+
+    )
+
+
+
+
+
+
+
+    notifs = res.scalars().all()
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    # 2. Count Unread
+
+
+
+
+
+
+
+    count_res = await db.execute(
+
+
+
+
+
+
+
+        select(func.count())
+
+
+
+
+
+
+
+        .select_from(Notification)
+
+
+
+
+
+
+
+        .where(Notification.user_id == user.id, Notification.is_read == False)
+
+
+
+
+
+
+
+    )
+
+
+
+
+
+
+
+    unread_count = count_res.scalar()
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    return {"items": notifs, "unread_count": unread_count}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.post("/api/notifications/read")
+
+
+
+
+
+
+
+async def mark_notifications_read(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+
+
+
+
+
+
+
+    await db.execute(
+
+
+
+
+
+
+
+        Notification.__table__.update()
+
+
+
+
+
+
+
+        .where(Notification.user_id == user.id, Notification.is_read == False)
+
+
+
+
+
+
+
+        .values(is_read=True)
+
+
+
+
+
+
+
+    )
+
+
+
+
+
+
+
+    await db.commit()
+
+
+
+
+
+
+
+    return {"status": "ok"}
+
+
+
+
+
+
+
+
 
 
 

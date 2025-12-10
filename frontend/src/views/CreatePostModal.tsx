@@ -4,19 +4,29 @@ import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 import { API_BASE_URL } from '../config'
 
+interface Post {
+    id: number
+    title: string
+    content: string
+    images: string[]
+}
+
 interface Props {
   onClose: () => void
   onSuccess: () => void
+  post?: Post // Optional: If provided, we are in Edit Mode
 }
 
-const CreatePostModal = ({ onClose, onSuccess }: Props) => {
+const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
   const [images, setImages] = useState<File[]>([])
-  const [previews, setPreviews] = useState<string[]>([])
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+  const [previews, setPreviews] = useState<string[]>(post?.images || [])
+  const [title, setTitle] = useState(post?.title || '')
+  const [content, setContent] = useState(post?.content || '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const token = useAuthStore(state => state.token)
+
+  const isEditMode = !!post
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -29,35 +39,46 @@ const CreatePostModal = ({ onClose, onSuccess }: Props) => {
   }
 
   const handleSubmit = async () => {
-    if (!content.trim() && images.length === 0) return
+    if (!content.trim() && images.length === 0 && !isEditMode) return
     setIsSubmitting(true)
 
     try {
-      // 1. Upload Images
-      const imageUrls = []
-      for (const file of images) {
-        const formData = new FormData()
-        formData.append('file', file)
-        const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        })
-        imageUrls.push(res.data.url)
-      }
+      if (isEditMode) {
+          // Update Post (Title/Content only for now)
+          await axios.put(`${API_BASE_URL}/api/posts/${post.id}`, {
+              title: title,
+              content: content
+          }, {
+              headers: { Authorization: `Bearer ${token}` }
+          })
+      } else {
+          // Create Post
+          // 1. Upload Images
+          const imageUrls = []
+          for (const file of images) {
+            const formData = new FormData()
+            formData.append('file', file)
+            const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            imageUrls.push(res.data.url)
+          }
 
-      // 2. Create Post
-      await axios.post(`${API_BASE_URL}/api/posts`, {
-        title: title || null,
-        content: content,
-        images: imageUrls
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+          // 2. Create Post
+          await axios.post(`${API_BASE_URL}/api/posts`, {
+            title: title || null,
+            content: content,
+            images: imageUrls
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+      }
 
       onSuccess()
       onClose()
     } catch (e) {
       console.error("Post failed", e)
-      alert("Failed to post. Please try again.")
+      alert("Failed to save. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -72,17 +93,18 @@ const CreatePostModal = ({ onClose, onSuccess }: Props) => {
         </button>
         <button 
           onClick={handleSubmit}
-          disabled={isSubmitting || (!content && images.length === 0)}
+          disabled={isSubmitting || (!content && images.length === 0 && !isEditMode)}
           className="bg-mc-orange text-white px-4 py-1.5 rounded-full text-sm font-bold disabled:opacity-50 flex items-center gap-2"
         >
           {isSubmitting && <Loader2 className="w-3 h-3 animate-spin" />}
-          Post
+          {isEditMode ? "Update" : "Post"}
         </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {/* Image Preview Area */}
+        {/* Image Preview Area - Read Only in Edit Mode for now */}
+        {!isEditMode && (
         <div className="flex gap-3 mb-4 overflow-x-auto pb-2 no-scrollbar">
           {previews.map((src, idx) => (
             <div key={idx} className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
@@ -114,6 +136,7 @@ const CreatePostModal = ({ onClose, onSuccess }: Props) => {
             onChange={handleFileSelect}
           />
         </div>
+        )}
 
         {/* Inputs */}
         <input 

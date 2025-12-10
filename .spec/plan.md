@@ -29,4 +29,24 @@
 - **Users:** `id, email, name, avatar_url, google_sub`
 - **Posts:** `id, user_id, title, content, images (JSON), created_at`
 - **Comments:** `id, post_id, user_id, content, parent_id`
-- **Likes/Collections:** Join tables for many-to-many.
+- [x] **Task 3.5:** UI Polish (Remove "Untitled", Better Grid).
+
+## Phase 4: Enterprise Ready & Social Engagement
+- [ ] **Task 4.1: Security & Access Control (Allowlist)**
+  - Add `AllowedEmail` model.
+  - Implement Import Script (CSV support, incremental update).
+  - Enforce Allowlist check in Google Auth login flow.
+- [ ] **Task 4.2: UX Polish (Lightbox)**
+  - Integrate `yet-another-react-lightbox` for immersive image viewing.
+  - Support pinch-zoom and swipe gestures.
+- [ ] **Task 4.3: Performance (Infinite Scroll)**
+  - Implement pagination for `/api/feed`.
+  - Add Infinite Scroll to Frontend.
+- [ ] **Task 4.4: Social Graph (Follow System)**
+  - Add `UserFollow` model.
+  - Implement Follow/Unfollow APIs.
+  - Real stats on User Profile.
+- [ ] **Task 4.5: Notification System**
+  - Add `Notification` model.
+  - Track likes/comments/follows.
+  - Notification UI.

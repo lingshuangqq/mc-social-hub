@@ -3,11 +3,16 @@ import { useAuthStore } from './store/auth'
 import LoginView from './views/LoginView'
 import CreatePostModal from './views/CreatePostModal'
 import PostDetailModal from './views/PostDetailModal'
+import PublicProfileView from './views/PublicProfileView'
 import ProfileView from './views/ProfileView'
 import MasonryGrid from './components/MasonryGrid'
-import { LayoutGrid, User, Search, X } from 'lucide-react'
+import BottomNav from './components/BottomNav'
+import SettingsView from './views/SettingsView'
+import NotificationsView from './views/NotificationsView'
+import { Search, X } from 'lucide-react'
 import axios from 'axios'
 import { API_BASE_URL } from './config'
+import InfiniteScroll from 'react-infinite-scroll-component'
 
 interface Post {
     id: number
@@ -19,44 +24,128 @@ interface Post {
     author: { name: string, avatar_url: string }
 }
 
+const PAGE_SIZE = 10;
+
+// Define tabs explicitly
+type ActiveTab = 'feed' | 'profile' | 'settings' | 'notifications';
+
 function App() {
   const user = useAuthStore(state => state.user)
   const [isCreating, setIsCreating] = useState(false)
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
+  const [publicProfileId, setPublicProfileId] = useState<number | null>(null)
+  
+  // Feed State
   const [posts, setPosts] = useState<Post[]>([])
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  
   const [refreshKey, setRefreshKey] = useState(0)
-  const [activeTab, setActiveTab] = useState<'feed' | 'profile'>('feed')
+  // Explicitly type the state
+  const [activeTab, setActiveTab] = useState<ActiveTab>('feed')
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
+  // Initial Load & Refresh & Notifications
   useEffect(() => {
-      if (user && activeTab === 'feed' && !searchQuery) {
-          axios.get(`${API_BASE_URL}/api/feed`).then(res => {
-              setPosts(res.data)
-          })
+      if (user) {
+          if (activeTab === 'feed' && !searchQuery) {
+              loadPosts(true)
+          }
+          // Poll notifications (Mock poll, ideally socket or just once on load)
+          fetchNotificationsCount()
       }
   }, [user, refreshKey, activeTab])
 
+  const fetchNotificationsCount = async () => {
+      if (!user) return
+      try {
+          const res = await axios.get(`${API_BASE_URL}/api/notifications?limit=1`, {
+             // We just need the count, limit 1 saves bandwidth
+          })
+          // Wait, backend returns { items: [], unread_count: 5 }
+          setUnreadCount(res.data.unread_count)
+      } catch (e) {
+          // silent fail
+      }
+  }
+
+  // Search Logic (Separate from feed pagination for now)
+  useEffect(() => {
+    if (user && activeTab === 'feed' && searchQuery) {
+        setIsSearching(true)
+        axios.get(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`)
+            .then(res => {
+                setPosts(res.data)
+                setHasMore(false) // Search doesn't support pagination yet
+            })
+            .catch(err => console.error(err))
+            .finally(() => setIsSearching(false))
+    }
+  }, [searchQuery, user, activeTab])
+
+  const loadPosts = async (reset = false) => {
+      if (!user) return
+      
+      const currentPage = reset ? 0 : page
+      const offset = currentPage * PAGE_SIZE
+      
+      try {
+          const res = await axios.get(`${API_BASE_URL}/api/feed?limit=${PAGE_SIZE}&offset=${offset}`)
+          const newPosts = res.data
+          
+          if (reset) {
+              setPosts(newPosts)
+              setPage(1) // Next page is 1
+          } else {
+              setPosts(prev => [...prev, ...newPosts])
+              setPage(prev => prev + 1)
+          }
+          
+          if (newPosts.length < PAGE_SIZE) {
+              setHasMore(false)
+          } else {
+              setHasMore(true)
+          }
+      } catch (e) {
+          console.error("Failed to load feed", e)
+      }
+  }
+
   const handleSearch = async (e?: React.FormEvent) => {
       e?.preventDefault()
-      setIsSearching(true)
-      try {
-          const endpoint = searchQuery.trim() 
-            ? `${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`
-            : `${API_BASE_URL}/api/feed`
-            
-          const res = await axios.get(endpoint)
-          setPosts(res.data)
-      } catch (error) {
-          console.error("Search failed", error)
-      } finally {
-          setIsSearching(false)
-      }
+      // Logic moved to useEffect [searchQuery]
   }
 
   const clearSearch = () => {
       setSearchQuery('')
       setRefreshKey(k => k + 1) // Trigger feed reload
+  }
+
+  const handlePostUpdate = (updatedPost: any) => {
+      setPosts(prev => prev.map(p => {
+          if (p.id === updatedPost.id) {
+              // Merge updates. Note: API detail response structure might differ slightly from Feed list item structure
+              // Feed item: { id, title, content, images, likes, collections, author }
+              // Detail item: { post: {...}, is_liked, like_count... }
+              
+              // If updatedPost comes from PostDetailModal's internal 'data' structure
+              // We need to map it back to the list structure.
+              
+              // Check if updatedPost is the full detail object or just the post part
+              // Let's assume onUpdate passes the standardized list-view compatible object or we construct it here.
+              
+              return {
+                  ...p,
+                  ...updatedPost, // Overwrite simple fields like title, content
+                  // Special handling for counters if passed separately
+                  likes: updatedPost.likes !== undefined ? updatedPost.likes : p.likes,
+                  collections: updatedPost.collections !== undefined ? updatedPost.collections : p.collections
+              }
+          }
+          return p
+      }))
   }
 
   if (!user) {
@@ -66,7 +155,7 @@ function App() {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
        {/* Only show global header in Feed tab */}
-       {activeTab === 'feed' && (
+       {activeTab === 'feed' && !selectedPostId && !publicProfileId && (
            <header className="bg-white px-4 py-3 flex items-center sticky top-0 z-10 border-b border-gray-100 gap-3">
                <div className="flex-1 relative">
                    <form onSubmit={handleSearch} className="relative">
@@ -89,67 +178,87 @@ function App() {
                        )}
                    </form>
                </div>
+               {/* Bell removed from header */}
                <img src={user.avatar} className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
            </header>
        )}
 
-       <main className="flex-1 overflow-y-auto p-0 scrollbar-hide">
-           {activeTab === 'feed' ? (
+       <main id="scrollableDiv" className="flex-1 overflow-y-auto p-0 scrollbar-hide">
+           {selectedPostId ? (
+               <PostDetailModal 
+                   postId={selectedPostId}
+                   onClose={() => setSelectedPostId(null)}
+                   onDelete={() => {
+                       setPosts(prev => prev.filter(p => p.id !== selectedPostId))
+                       setRefreshKey(k => k + 1) 
+                   }}
+                   onUpdate={handlePostUpdate}
+                   onUserClick={(userId) => {
+                       setSelectedPostId(null)
+                       setPublicProfileId(userId)
+                   }}
+               />
+           ) : publicProfileId ? (
+               <PublicProfileView 
+                   userId={publicProfileId}
+                   onBack={() => setPublicProfileId(null)}
+                   onPostClick={setSelectedPostId}
+               />
+           ) : activeTab === 'feed' ? (
                <div className="p-2">
                    {isSearching ? (
                        <div className="flex justify-center py-10">
                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mc-orange"></div>
                        </div>
-                   ) : posts.length === 0 ? (
-                       <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
-                           <p>{searchQuery ? 'No results found' : 'No posts yet'}</p>
-                           {!searchQuery && <p className="text-xs mt-1">Be the first to share!</p>}
-                       </div>
                    ) : (
-                       <MasonryGrid posts={posts} onPostClick={setSelectedPostId} />
+                       <InfiniteScroll
+                            dataLength={posts.length}
+                            next={() => loadPosts(false)}
+                            hasMore={hasMore && !searchQuery} // Disable infinite scroll during search
+                            loader={<div className="text-center py-4 text-xs text-gray-400">Loading more...</div>}
+                            scrollableTarget="scrollableDiv"
+                            endMessage={
+                                posts.length > 0 && <div className="text-center py-8 text-xs text-gray-300">No more posts</div>
+                            }
+                       >
+                            {posts.length === 0 && !searchQuery ? (
+                                <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
+                                    <p>No posts yet</p>
+                                    <p className="text-xs mt-1">Be the first to share!</p>
+                                </div>
+                            ) : (
+                                <MasonryGrid posts={posts} onPostClick={setSelectedPostId} />
+                            )}
+                       </InfiniteScroll>
                    )}
                </div>
+           ) : activeTab === 'profile' ? (
+               <ProfileView 
+                  onPostClick={setSelectedPostId} 
+                  onSettingsClick={() => setActiveTab('settings')}
+               />
+           ) : activeTab === 'notifications' ? (
+               <NotificationsView 
+                   onPostClick={setSelectedPostId}
+               />
            ) : (
-               <ProfileView onPostClick={setSelectedPostId} />
+               <SettingsView onBack={() => setActiveTab('profile')} />
            )}
        </main>
 
-       <nav className="bg-white border-t border-gray-100 pb-safe pt-2 px-6 flex justify-between items-center h-16 shrink-0 z-20">
-           <button 
-                onClick={() => setActiveTab('feed')}
-                className={`flex flex-col items-center ${activeTab === 'feed' ? 'text-mc-navy' : 'text-gray-400'}`}
-           >
-               <LayoutGrid className="w-6 h-6" />
-               <span className="text-[10px] font-medium mt-1">Feed</span>
-           </button>
-           
-           <button 
-                onClick={() => setIsCreating(true)}
-                className="flex items-center justify-center w-12 h-12 bg-mc-orange text-white rounded-full shadow-lg shadow-mc-orange/30 -mt-6 hover:scale-105 transition-transform active:scale-95"
-           >
-               <span className="text-2xl font-light mb-1">+</span>
-           </button>
-           
-           <button 
-                onClick={() => setActiveTab('profile')}
-                className={`flex flex-col items-center ${activeTab === 'profile' ? 'text-mc-navy' : 'text-gray-400'}`}
-           >
-               <User className="w-6 h-6" />
-               <span className="text-[10px] font-medium mt-1">Me</span>
-           </button>
-       </nav>
+       {activeTab !== 'settings' && !selectedPostId && !publicProfileId && (
+           <BottomNav 
+               activeTab={activeTab} 
+               setActiveTab={setActiveTab} 
+               onAddClick={() => setIsCreating(true)} 
+               unreadCount={unreadCount} 
+           />
+       )}
 
        {isCreating && (
            <CreatePostModal 
                onClose={() => setIsCreating(false)} 
                onSuccess={() => setRefreshKey(k => k + 1)} 
-           />
-       )}
-
-       {selectedPostId && (
-           <PostDetailModal 
-               postId={selectedPostId}
-               onClose={() => setSelectedPostId(null)}
            />
        )}
     </div>

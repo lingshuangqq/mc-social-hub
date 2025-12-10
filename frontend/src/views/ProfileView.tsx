@@ -16,6 +16,9 @@ interface ProfileData {
         name: string
         avatar_url: string
         email: string
+        bio?: string
+        title?: string
+        location?: string
     }
     stats: {
         posts: number
@@ -25,17 +28,21 @@ interface ProfileData {
     }
 }
 
-const ProfileView = ({ onPostClick }: { onPostClick: (id: number) => void }) => {
+interface Props {
+    onPostClick: (id: number) => void
+    onSettingsClick: () => void
+}
+
+const ProfileView = ({ onPostClick, onSettingsClick }: Props) => {
   const [data, setData] = useState<ProfileData | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [activeTab, setActiveTab] = useState<'posts' | 'collects' | 'likes'>('posts')
-  const token = useAuthStore(state => state.token)
-  const logout = useAuthStore(state => state.logout)
+  const { token, user: storeUser } = useAuthStore()
 
   useEffect(() => {
       fetchProfile()
       fetchContent(activeTab)
-  }, [activeTab])
+  }, [activeTab, storeUser]) // Refresh when storeUser updates
 
   const fetchProfile = async () => {
       const res = await axios.get(`${API_BASE_URL}/api/users/me`, { headers: { Authorization: `Bearer ${token}` } })
@@ -61,7 +68,7 @@ const ProfileView = ({ onPostClick }: { onPostClick: (id: number) => void }) => 
        <div className="h-32 bg-gradient-to-r from-mc-navy to-blue-800 relative">
            <div className="absolute top-4 right-4 flex gap-3 text-white">
                <Share2 className="w-5 h-5" />
-               <button onClick={logout}><Settings className="w-5 h-5" /></button>
+               <button onClick={onSettingsClick}><Settings className="w-5 h-5" /></button>
            </div>
        </div>
 
@@ -74,19 +81,14 @@ const ProfileView = ({ onPostClick }: { onPostClick: (id: number) => void }) => 
            <div className="pt-12">
                <div className="flex items-center justify-between pr-4">
                    <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
-                   <button 
-                       onClick={logout}
-                       className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-medium transition-colors"
-                   >
-                       Sign Out
-                   </button>
+                   {/* Edit Profile button removed - moved to Settings (Gear Icon) */}
                </div>
                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 mb-3">
-                   <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" /> Master Concept</span>
-                   <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> Hong Kong</span>
+                   <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" /> {user.title || 'Master Concept'}</span>
+                   <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {user.location || 'Hong Kong'}</span>
                </div>
                
-               <p className="text-sm text-gray-700 mb-4">Love coding, coffee, and cats. ☕️🐈</p>
+               <p className="text-sm text-gray-700 mb-4 whitespace-pre-wrap">{user.bio || "No bio yet."}</p>
                
                <div className="flex gap-6 text-sm">
                    <div className="flex flex-col items-center">
