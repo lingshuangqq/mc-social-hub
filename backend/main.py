@@ -72,7 +72,7 @@ async def analyze_post_content(images: List[str], title: str, content: str) -> s
         if content:
             parts.append(f"Content: {content}")
             
-        parts.append("Task: Analyze the above social media post. 1. Select 1-2 most relevant categories from this list: [Clubs, Events, Market, Welfare, Food, Admin, Logistics, Help, Chat]. 2. Optionally add 1-2 specific descriptive tags (e.g. 'Coffee', 'Hiking') based on the content or images. 3. Return a JSON array of strings. Max 3 tags total. Output ONLY the JSON array.")
+        parts.append("Task: Analyze the above social media post. 1. Select 1-2 most relevant categories from this list: [Life, Work, Event, Food, Clubs, Market, Tech, Welfare, Help]. 2. Optionally add 1-2 specific descriptive tags (e.g. 'Coffee', 'Hiking') based on the content or images. 3. Return a JSON array of strings. Max 3 tags total. Output ONLY the JSON array.")
 
         # Process images
         for path in images:

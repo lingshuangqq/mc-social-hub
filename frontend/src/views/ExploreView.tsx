@@ -11,10 +11,10 @@ import {
     Gift, 
     Briefcase, 
     Activity, 
-    MessageCircle, 
     HelpCircle,
-    Truck,
-    Sparkles
+    Sparkles,
+    Coffee,
+    Monitor
 } from 'lucide-react'
 
 interface Post {
@@ -30,15 +30,15 @@ interface Post {
 // Mock Data for Icon Grid
 const QUICK_LINKS = [
     { icon: Sparkles, label: "Recommend", color: "bg-yellow-100 text-yellow-600" },
-    { icon: Activity, label: "Clubs", color: "bg-blue-100 text-blue-600" },
-    { icon: Calendar, label: "Events", color: "bg-purple-100 text-purple-600" },
+    { icon: Coffee, label: "Life", color: "bg-green-100 text-green-600" },
+    { icon: Briefcase, label: "Work", color: "bg-blue-100 text-blue-600" },
+    { icon: Calendar, label: "Event", color: "bg-purple-100 text-purple-600" },
+    { icon: Utensils, label: "Food", color: "bg-orange-100 text-orange-600" },
+    { icon: Activity, label: "Clubs", color: "bg-red-100 text-red-600" },
     { icon: ShoppingBag, label: "Market", color: "bg-pink-100 text-pink-600" },
-    { icon: Gift, label: "Welfare", color: "bg-orange-100 text-orange-600" },
-    { icon: Utensils, label: "Food", color: "bg-green-100 text-green-600" },
-    { icon: Briefcase, label: "Admin", color: "bg-indigo-100 text-indigo-600" },
-    { icon: Truck, label: "Logistics", color: "bg-yellow-100 text-yellow-600" },
-    { icon: HelpCircle, label: "Help", color: "bg-teal-100 text-teal-600" },
-    { icon: MessageCircle, label: "Chat", color: "bg-red-100 text-red-600" },
+    { icon: Monitor, label: "Tech", color: "bg-indigo-100 text-indigo-600" },
+    { icon: Gift, label: "Welfare", color: "bg-teal-100 text-teal-600" },
+    { icon: HelpCircle, label: "Help", color: "bg-gray-100 text-gray-600" },
 ]
 
 interface Props {

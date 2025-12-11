@@ -30,7 +30,7 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
   const token = useAuthStore(state => state.token)
 
   const isEditMode = !!post
-  const POST_TAGS = ["Life", "Work", "Event", "Food", "Fun", "Tech", "Design", "Market"]
+  const POST_TAGS = ["Life", "Work", "Event", "Food", "Clubs", "Market", "Tech", "Welfare", "Help"]
 
   const toggleTag = (tag: string) => {
       setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
