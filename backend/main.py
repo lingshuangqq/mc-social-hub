@@ -141,6 +141,26 @@ async def lifespan(app: FastAPI):
                 print("DEBUG: MIGRATION - Adding 'ai_keywords' column to 'posts' table...")
                 await conn.execute(text("ALTER TABLE posts ADD COLUMN ai_keywords TEXT"))
                 print("DEBUG: MIGRATION - 'ai_keywords' column added successfully.")
+            
+            # --- Manual Migration for Users Table (Phase 5) ---
+            def check_user_columns(connection):
+                inspector = inspect(connection)
+                if 'users' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('users')]
+                    missing = []
+                    for col in ['bio', 'title', 'location']:
+                        if col not in columns:
+                            missing.append(col)
+                    return missing
+                return []
+
+            missing_user_cols = await conn.run_sync(check_user_columns)
+            
+            for col in missing_user_cols:
+                print(f"DEBUG: MIGRATION - Adding '{col}' column to 'users' table...")
+                await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))
+                print(f"DEBUG: MIGRATION - '{col}' column added successfully.")
+            # ------------------------------------------------------
             # ------------------------------------------------------
             
         os.makedirs("static/uploads", exist_ok=True)
