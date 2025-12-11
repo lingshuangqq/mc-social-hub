@@ -93,7 +93,7 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
   }
 
   // Content Component to reuse logic
-  const ModalContent = () => (
+  const modalContent = (
       <>
       {/* Header */}
       <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 shrink-0">
@@ -193,7 +193,7 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
       return (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
               <div className="bg-white rounded-2xl w-full max-w-lg h-[600px] flex flex-col shadow-2xl relative">
-                  <ModalContent />
+                  {modalContent}
               </div>
           </div>
       )
@@ -201,7 +201,7 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-      <ModalContent />
+      {modalContent}
     </div>
   )
 }
