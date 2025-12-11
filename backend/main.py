@@ -799,7 +799,15 @@ async def get_feed(limit: int = 20, offset: int = 0, tag: Optional[str] = None, 
 
 
 
+
+
+
+
 async def get_post_detail(post_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+
+
+
+
 
 
 
@@ -807,7 +815,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
         select(Post)
+
+
+
+
 
 
 
@@ -815,7 +831,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
         .options(
+
+
+
+
 
 
 
@@ -823,7 +847,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
             selectinload(Post.comments).selectinload(Comment.author)
+
+
+
+
 
 
 
@@ -831,7 +863,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
     )
+
+
+
+
 
 
 
@@ -839,7 +879,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
     if not post:
+
+
+
+
 
 
 
@@ -847,7 +895,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -855,7 +911,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
     like_res = await db.execute(select(PostLike).where(PostLike.post_id == post_id, PostLike.user_id == user.id))
+
+
+
+
 
 
 
@@ -863,7 +927,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -871,7 +943,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
     is_collected = collect_res.scalar() is not None
+
+
+
+
 
 
 
@@ -879,7 +959,15 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
+
+
+
+
     like_count_res = await db.execute(select(func.count()).select_from(PostLike).where(PostLike.post_id == post_id))
+
+
+
+
 
 
 
@@ -891,7 +979,6 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
-        collection_count_res = await db.execute(select(func.count()).select_from(PostCollection).where(PostCollection.post_id == post_id))
 
 
 
@@ -899,23 +986,22 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
-        collection_count = collection_count_res.scalar()
 
+    collection_count_res = await db.execute(select(func.count()).select_from(PostCollection).where(PostCollection.post_id == post_id))
 
 
 
 
 
 
-    
 
+    collection_count = collection_count_res.scalar()
 
 
 
 
 
 
-        # Check is_following author
 
 
 
@@ -923,31 +1009,30 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
-        follow_res = await db.execute(select(UserFollow).where(UserFollow.follower_id == user.id, UserFollow.followed_id == post.user_id))
 
 
+    # Check is_following author
 
 
 
 
 
-        is_following = follow_res.scalars().first() is not None
 
 
+    follow_res = await db.execute(select(UserFollow).where(UserFollow.follower_id == user.id, UserFollow.followed_id == post.user_id))
 
 
 
 
 
-    
 
 
+    is_following = follow_res.scalars().first() is not None
 
 
 
 
 
-        return {
 
 
 
@@ -955,55 +1040,66 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
-            "post": post,
 
 
 
+    return {
 
 
 
 
-            "is_liked": is_liked,
 
 
 
+        "post": post,
 
 
 
 
-            "is_collected": is_collected,
 
 
 
+        "is_liked": is_liked,
 
 
 
 
-            "like_count": like_count,
 
 
 
+        "is_collected": is_collected,
 
 
 
 
-            "collection_count": collection_count,
 
 
 
+        "like_count": like_count,
 
 
 
 
-            "is_following": is_following
 
 
 
+        "collection_count": collection_count,
 
 
 
 
-        }
+
+
+
+        "is_following": is_following
+
+
+
+
+
+
+
+    }
 
 
 

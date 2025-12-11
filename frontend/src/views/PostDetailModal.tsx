@@ -209,49 +209,32 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
                   <ArrowLeft className="w-6 h-6" />
               </button>
               
-              <div className="flex items-center gap-2 pointer-events-auto">
-                  {!isAuthor && (
-                      <button 
-                          onClick={handleFollow}
-                          className={`
-                              px-3 py-1.5 rounded-full text-xs font-bold transition-all backdrop-blur-md
-                              ${data.is_following 
-                                  ? 'bg-white/20 text-white/80 border border-white/20' 
-                                  : 'bg-mc-orange text-white shadow-lg'
-                              }
-                          `}
-                      >
-                          {data.is_following ? 'Following' : 'Follow'}
+              {isAuthor && (
+                  <div className="relative pointer-events-auto">
+                      <button onClick={() => setShowMenu(!showMenu)} className="bg-white/20 backdrop-blur-md text-white p-2 rounded-full hover:bg-white/30 transition-colors">
+                          <MoreVertical className="w-6 h-6" />
                       </button>
-                  )}
-
-                  {isAuthor && (
-                      <div className="relative">
-                          <button onClick={() => setShowMenu(!showMenu)} className="bg-white/20 backdrop-blur-md text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                              <MoreVertical className="w-6 h-6" />
-                          </button>
-                          {/* Mobile Menu Dropdown */}
-                          {showMenu && (
-                              <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right">
-                                  <button 
-                                      onClick={() => { setShowMenu(false); setIsEditing(true); }}
-                                      className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                  >
-                                      <Edit2 className="w-4 h-4" />
-                                      Edit
-                                  </button>
-                                  <button 
-                                      onClick={handleDelete}
-                                      className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-100"
-                                  >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete
-                                  </button>
-                              </div>
-                          )}
-                      </div>
-                  )}
-              </div>
+                      {/* Mobile Menu Dropdown */}
+                      {showMenu && (
+                          <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                              <button 
+                                  onClick={() => { setShowMenu(false); setIsEditing(true); }}
+                                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                  <Edit2 className="w-4 h-4" />
+                                  Edit
+                              </button>
+                              <button 
+                                  onClick={handleDelete}
+                                  className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-100"
+                              >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                              </button>
+                          </div>
+                      )}
+                  </div>
+              )}
           </div>
   
           {/* Scrollable Area */}
@@ -284,12 +267,29 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
   
               {/* Content Info */}
               <div className="p-4">
-                  <div 
-                    className="flex items-center gap-3 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => onUserClick && onUserClick(post.user_id)}
-                  >
-                      <img src={post.author.avatar_url} className="w-10 h-10 rounded-full border border-gray-100" />
-                      <span className="font-bold text-sm text-gray-800">{post.author.name}</span>
+                  <div className="flex items-center justify-between mb-4">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => onUserClick && onUserClick(post.user_id)}
+                      >
+                          <img src={post.author.avatar_url} className="w-10 h-10 rounded-full border border-gray-100" />
+                          <span className="font-bold text-sm text-gray-800">{post.author.name}</span>
+                      </div>
+                      
+                      {!isAuthor && (
+                          <button 
+                              onClick={handleFollow}
+                              className={`
+                                  px-5 py-1.5 rounded-full text-xs font-bold transition-all
+                                  ${data.is_following 
+                                      ? 'bg-gray-100 text-gray-500 border border-gray-200' 
+                                      : 'bg-white text-mc-orange border border-mc-orange'
+                                  }
+                              `}
+                          >
+                              {data.is_following ? 'Following' : 'Follow'}
+                          </button>
+                      )}
                   </div>
   
                   {post.title && <h1 className="text-lg font-bold text-gray-900 mb-2">{post.title}</h1>}
