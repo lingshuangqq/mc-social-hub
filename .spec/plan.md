@@ -16,20 +16,23 @@
 
 ## 2. Frontend Architecture (React/Vite)
 - **Stack:** React 18, TypeScript, Tailwind CSS, Zustand, Axios.
+- **Layout Strategy:**
+  - **Responsive:** JS-based switching using `useMediaQuery`.
+  - **Mobile:** `MobileLayout` (Top Header + Bottom Nav).
+  - **Desktop:** `DesktopLayout` (Left SideNav + Center Content + Right Widgets).
 - **State Management:**
   - `useAuthStore`: Persist User/Token.
-  - Local State for Modals/Feeds.
+  - `App.tsx`: Central controller for Routing and View state (Feed/Explore/Profile).
 - **Key Components:**
   - `MasonryGrid`: Virtual column layout logic.
-  - `PostDetailModal`: Complex interaction view.
-  - `CreatePostModal`: Form & Upload logic.
-  - `ProfileView`: User dashboard.
+  - `PostDetailModal`: Responsive overlay (Fullscreen on Mobile, Dialog on Desktop).
+  - `CreatePostModal`: Responsive overlay.
+  - `SideNav`: Desktop navigation.
 
 ## 3. Database Schema
 - **Users:** `id, email, name, avatar_url, google_sub`
 - **Posts:** `id, user_id, title, content, images (JSON), created_at`
 - **Comments:** `id, post_id, user_id, content, parent_id`
-- [x] **Task 3.5:** UI Polish (Remove "Untitled", Better Grid).
 
 ## Phase 4: Enterprise Ready & Social Engagement (Completed)
 - [x] **Task 4.1: Security & Access Control (Allowlist)**
@@ -52,7 +55,7 @@
   - Track likes/comments/follows/collects.
   - Notification UI with correct text and icons for all types.
 
-## Phase 5: Content Discovery & Enhancement
+## Phase 5: Content Discovery & Enhancement (Completed)
 - [x] **Task 5.1: Public User Profile**
   - Backend: `GET /api/users/{id}` for public profile data and `is_following` status.
   - Backend: `GET /api/users/{id}/posts` for user's posts.
@@ -72,26 +75,23 @@
   - Implemented "Hot/Recommend" logic in backend (sort by likes count).
   - Fixed Search clear behavior.
 
-## Phase 6: PC Web Adaptation
-**Objective:** Provide a first-class experience on desktop browsers without maintaining a separate codebase. Use CSS Media Queries and React Conditional Rendering to adapt the UI.
+## Phase 6: PC Web Adaptation (In Progress)
+**Objective:** Provide a first-class experience on desktop browsers without maintaining a separate codebase.
 
-- [ ] **Task 6.1: Responsive Layout Architecture**
-  - **Goal:** Transform from Mobile-only to Responsive.
+- [x] **Task 6.1: Responsive Layout Architecture**
+  - **Goal:** Clean separation of Mobile and Desktop layout code.
   - **Implementation:**
-    - Create `layout/MainLayout.tsx`.
-    - Use Tailwind breakpoints (`md`, `lg`, `xl`).
-    - **Mobile (< 768px):** Keep current layout (Header + Content + BottomNav).
-    - **Desktop (>= 768px):** 
-      - **Left:** Navigation Sidebar (Logo, Menu Items, Post Button).
-      - **Center:** Feed / Content (Width limited to ~600px-800px).
-      - **Right:** Auxiliary Panel (Profile Summary, Suggestions).
+    - `useMediaQuery` hook for detection.
+    - `MobileLayout`: Existing Stack (Header/BottomNav).
+    - `DesktopLayout`: New 3-Column Grid (SideNav/Main/RightSidebar).
+    - `App.tsx`: Handles View routing and passes content to active Layout.
   
-- [ ] **Task 6.2: Desktop Modals**
+- [x] **Task 6.2: Desktop Modals**
   - **Goal:** Modals should look like dialogs, not full pages.
   - **Implementation:**
-    - Refactor `CreatePostModal` and `PostDetailModal`.
-    - On Desktop: Fixed width/height, rounded corners, centered overlay with backdrop blur.
-    - On Mobile: `fixed inset-0` (Full screen).
+    - Refactored `CreatePostModal` and `PostDetailModal`.
+    - Desktop: Fixed width/height, rounded corners, centered overlay with backdrop blur.
+    - Mobile: Full screen.
 
 - [ ] **Task 6.3: Adaptive Grid**
   - **Goal:** Use screen real estate efficiently.

@@ -7,13 +7,16 @@ import PublicProfileView from './views/PublicProfileView'
 import ProfileView from './views/ProfileView'
 import ExploreView from './views/ExploreView'
 import MasonryGrid from './components/MasonryGrid'
-import BottomNav from './components/BottomNav'
 import SettingsView from './views/SettingsView'
 import NotificationsView from './views/NotificationsView'
-import { Search, X } from 'lucide-react'
 import axios from 'axios'
 import { API_BASE_URL } from './config'
 import InfiniteScroll from 'react-infinite-scroll-component'
+
+// Layouts & Hooks
+import { useMediaQuery } from './hooks/useMediaQuery'
+import MobileLayout from './layout/MobileLayout'
+import DesktopLayout from './layout/DesktopLayout'
 
 interface Post {
     id: number
@@ -32,6 +35,8 @@ type ActiveTab = 'feed' | 'explore' | 'profile' | 'settings' | 'notifications';
 
 function App() {
   const user = useAuthStore(state => state.user)
+  const isDesktop = useMediaQuery('(min-width: 768px)') // md breakpoint
+
   const [isCreating, setIsCreating] = useState(false)
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
   const [publicProfileId, setPublicProfileId] = useState<number | null>(null)
@@ -54,7 +59,6 @@ function App() {
           const res = await axios.get(`${API_BASE_URL}/api/notifications?limit=1`, {
              // We just need the count, limit 1 saves bandwidth
           })
-          // Wait, backend returns { items: [], unread_count: 5 }
           setUnreadCount(res.data.unread_count)
       } catch (e) {
           // silent fail
@@ -126,20 +130,9 @@ function App() {
   const handlePostUpdate = (updatedPost: any) => {
       setPosts(prev => prev.map(p => {
           if (p.id === updatedPost.id) {
-              // Merge updates. Note: API detail response structure might differ slightly from Feed list item structure
-              // Feed item: { id, title, content, images, likes, collections, author }
-              // Detail item: { post: {...}, is_liked, like_count... }
-              
-              // If updatedPost comes from PostDetailModal's internal 'data' structure
-              // We need to map it back to the list structure.
-              
-              // Check if updatedPost is the full detail object or just the post part
-              // Let's assume onUpdate passes the standardized list-view compatible object or we construct it here.
-              
               return {
                   ...p,
-                  ...updatedPost, // Overwrite simple fields like title, content
-                  // Special handling for counters if passed separately
+                  ...updatedPost, 
                   likes: updatedPost.likes !== undefined ? updatedPost.likes : p.likes,
                   collections: updatedPost.collections !== undefined ? updatedPost.collections : p.collections
               }
@@ -152,45 +145,17 @@ function App() {
     return <LoginView />
   }
 
-  return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-       {/* Only show global header in Feed and Explore tabs */}
-       {(activeTab === 'feed' || activeTab === 'explore') && !selectedPostId && !publicProfileId && (
-           <header className="bg-white px-4 py-3 flex items-center sticky top-0 z-10 border-b border-gray-100 gap-3">
-               <div className="flex-1 relative">
-                   <form onSubmit={handleSearch} className="relative">
-                       <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                       <input 
-                           type="text" 
-                           placeholder="Search MC Hub..." 
-                           className="w-full bg-gray-100 text-sm py-2 pl-9 pr-8 rounded-full focus:outline-none focus:ring-1 focus:ring-mc-navy/20"
-                           value={searchQuery}
-                           onChange={(e) => setSearchQuery(e.target.value)}
-                       />
-                       {searchQuery && (
-                           <button 
-                               type="button"
-                               onClick={clearSearch}
-                               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                           >
-                               <X className="w-4 h-4" />
-                           </button>
-                       )}
-                   </form>
-               </div>
-               {/* Bell removed from header */}
-               <img src={user.avatar} className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
-           </header>
-       )}
-
-       <main id="scrollableDiv" className="flex-1 overflow-y-auto p-0 scrollbar-hide">
-           {selectedPostId ? (
+  // --- View Rendering Logic ---
+  const renderContent = () => {
+      if (selectedPostId) {
+          return (
                <PostDetailModal 
                    postId={selectedPostId}
                    onClose={() => setSelectedPostId(null)}
                    onDelete={() => {
                        setPosts(prev => prev.filter(p => p.id !== selectedPostId))
                        setRefreshKey(k => k + 1) 
+                       setSelectedPostId(null)
                    }}
                    onUpdate={handlePostUpdate}
                    onUserClick={(userId) => {
@@ -198,74 +163,120 @@ function App() {
                        setPublicProfileId(userId)
                    }}
                />
-           ) : publicProfileId ? (
+          )
+      }
+      
+      if (publicProfileId) {
+          return (
                <PublicProfileView 
                    userId={publicProfileId}
                    onBack={() => setPublicProfileId(null)}
                    onPostClick={setSelectedPostId}
                />
-           ) : activeTab === 'feed' ? (
-               <div className="p-2">
-                   {isSearching ? (
-                       <div className="flex justify-center py-10">
-                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mc-orange"></div>
-                       </div>
-                   ) : (
-                       <InfiniteScroll
-                            dataLength={posts.length}
-                            next={() => loadPosts(false)}
-                            hasMore={hasMore && !searchQuery} // Disable infinite scroll during search
-                            loader={<div className="text-center py-4 text-xs text-gray-400">Loading more...</div>}
-                            scrollableTarget="scrollableDiv"
-                            endMessage={
-                                posts.length > 0 && <div className="text-center py-8 text-xs text-gray-300">No more posts</div>
-                            }
-                       >
-                            {posts.length === 0 && !searchQuery ? (
-                                <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
-                                    <p>No posts yet</p>
-                                    <p className="text-xs mt-1">Be the first to share!</p>
-                                </div>
-                            ) : (
-                                <MasonryGrid 
-                                    posts={posts} 
-                                    onPostClick={setSelectedPostId} 
-                                    onUserClick={setPublicProfileId}
-                                />
-                            )}
-                       </InfiniteScroll>
-                   )}
-               </div>
-           ) : activeTab === 'explore' ? (
-               <ExploreView 
-                   onPostClick={setSelectedPostId} 
-                   onUserClick={setPublicProfileId}
-                   refreshTrigger={refreshKey}
-               />
-           ) : activeTab === 'profile' ? (
-               <ProfileView 
-                  onPostClick={setSelectedPostId} 
-                  onSettingsClick={() => setActiveTab('settings')}
-               />
-           ) : activeTab === 'notifications' ? (
-               <NotificationsView 
-                   onPostClick={setSelectedPostId}
-               />
-           ) : (
-               <SettingsView onBack={() => setActiveTab('profile')} />
-           )}
-       </main>
+          )
+      }
 
-       {activeTab !== 'settings' && !selectedPostId && !publicProfileId && (
-           <BottomNav 
-               activeTab={activeTab} 
-               setActiveTab={setActiveTab} 
-               onAddClick={() => setIsCreating(true)} 
-               unreadCount={unreadCount} 
-           />
-       )}
+      switch (activeTab) {
+          case 'feed':
+              return (
+                   <div className="p-2">
+                       {isSearching ? (
+                           <div className="flex justify-center py-10">
+                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mc-orange"></div>
+                           </div>
+                       ) : (
+                           <InfiniteScroll
+                                dataLength={posts.length}
+                                next={() => loadPosts(false)}
+                                hasMore={hasMore && !searchQuery}
+                                loader={<div className="text-center py-4 text-xs text-gray-400">Loading more...</div>}
+                                scrollableTarget="scrollableDiv"
+                                endMessage={
+                                    posts.length > 0 && <div className="text-center py-8 text-xs text-gray-300">No more posts</div>
+                                }
+                           >
+                                {posts.length === 0 && !searchQuery ? (
+                                    <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
+                                        <p>No posts yet</p>
+                                        <p className="text-xs mt-1">Be the first to share!</p>
+                                    </div>
+                                ) : (
+                                    <MasonryGrid 
+                                        posts={posts} 
+                                        onPostClick={setSelectedPostId} 
+                                        onUserClick={setPublicProfileId}
+                                    />
+                                )}
+                           </InfiniteScroll>
+                       )}
+                   </div>
+              )
+          case 'explore':
+              return (
+                   <ExploreView 
+                       onPostClick={setSelectedPostId} 
+                       onUserClick={setPublicProfileId}
+                       refreshTrigger={refreshKey}
+                   />
+              )
+          case 'profile':
+              return (
+                   <ProfileView 
+                      onPostClick={setSelectedPostId} 
+                      onSettingsClick={() => setActiveTab('settings')}
+                   />
+              )
+          case 'notifications':
+              return (
+                   <NotificationsView 
+                       onPostClick={setSelectedPostId}
+                   />
+              )
+          case 'settings':
+              return <SettingsView onBack={() => setActiveTab('profile')} />
+          default:
+              return null
+      }
+  }
 
-       {isCreating && (
+  const handleTabChange = (tab: ActiveTab) => {
+      setActiveTab(tab)
+      // Clear all overlay states when switching main tabs
+      setSelectedPostId(null)
+      setPublicProfileId(null)
+      // Also clear settings view if we are navigating away (though activeTab handles that)
+  }
+
+  return (
+    <>
+        {isDesktop ? (
+            <DesktopLayout
+                activeTab={activeTab}
+                setActiveTab={handleTabChange}
+                user={user}
+                onAddClick={() => setIsCreating(true)}
+                unreadCount={unreadCount}
+            >
+                {renderContent()}
+            </DesktopLayout>
+        ) : (
+            <MobileLayout
+                activeTab={activeTab}
+                setActiveTab={handleTabChange}
+                user={user}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSearchSubmit={handleSearch}
+                onClearSearch={clearSearch}
+                onAddClick={() => setIsCreating(true)}
+                unreadCount={unreadCount}
+                showHeader={['feed', 'explore'].includes(activeTab) && !selectedPostId && !publicProfileId}
+            >
+                {renderContent()}
+            </MobileLayout>
+        )}
+
+        {isCreating && (
            <CreatePostModal 
                onClose={() => setIsCreating(false)} 
                onSuccess={(newPostId) => {
@@ -276,7 +287,7 @@ function App() {
                }} 
            />
        )}
-    </div>
+    </>
   )
 }
 

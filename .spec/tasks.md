@@ -54,15 +54,19 @@
   - Search clear reset logic.
   - Explore page refresh sync.
 
-## Phase 6: PC Web Adaptation
-- [ ] **Task 6.1: Responsive Layout & Navigation**
-  - Implement `ResponsiveShell` component.
-  - Show `BottomNav` on mobile (< md), `SideNav` on desktop (>= md).
-  - Adjust main container max-width for desktop (centered).
-- [ ] **Task 6.2: Desktop Modals**
-  - Update `PostDetailModal` and `CreatePostModal` to be centered dialogs on desktop (max-width + backdrop), instead of full-screen.
+## Phase 6: PC Web Adaptation (In Progress)
+- [x] **Task 6.1: Responsive Layout Architecture**
+  - [x] Implement `useMediaQuery` hook for JS-based responsive logic.
+  - [x] Create `MobileLayout` (Header + Content + BottomNav).
+  - [x] Create `DesktopLayout` (SideNav + Content + RightSidebar).
+  - [x] Refactor `App.tsx` to automatically switch layouts based on screen width.
+  - [x] Fix Desktop navigation issue (auto-close overlays on tab switch).
+- [x] **Task 6.2: Desktop Modals**
+  - [x] Update `CreatePostModal` to be a centered dialog on desktop.
+  - [x] Update `PostDetailModal` to be a centered dialog on desktop (max-width 480px).
 - [ ] **Task 6.3: Adaptive Masonry Grid**
-  - Update `MasonryGrid` to support 3 or 4 columns on large screens.
-- [ ] **Task 6.4: Right Sidebar (Widgets)**
-  - Create desktop-only right column.
-  - Add widgets: "Who to follow", "Trending Tags", "User Mini Profile".
+  - Update `MasonryGrid` to support 3 or 4 columns on large screens (currently fixed at 2).
+- [ ] **Task 6.4: Right Sidebar Widgets**
+  - Implement real data for "Trending Tags".
+  - Implement real data for "Who to Follow".
+  - Add Search functionality integration.

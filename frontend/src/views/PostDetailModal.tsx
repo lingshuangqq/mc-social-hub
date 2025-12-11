@@ -9,6 +9,7 @@ import "yet-another-react-lightbox/styles.css";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import { useSwipeable } from 'react-swipeable';
 import CreatePostModal from './CreatePostModal'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 interface Props {
   postId: number
@@ -45,6 +46,7 @@ interface PostDetail {
 }
 
 const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: Props) => {
+  const isDesktop = useMediaQuery('(min-width: 768px)')
   const [data, setData] = useState<PostDetail | null>(null)
   const [commentInput, setCommentInput] = useState('')
   const [replyTo, setReplyTo] = useState<Comment | null>(null)
@@ -148,45 +150,39 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
 
   const { post } = data
   const isAuthor = currentUser?.id === post.user_id
-  
-  // Debug Log for ID Mismatch
-  if (!isAuthor && currentUser) {
-      console.log(`DEBUG: Not Author. CurrentUser ID: ${currentUser.id}, Post User ID: ${post.user_id}`)
+
+  if (isEditing) {
+    return (
+        <CreatePostModal 
+            post={post}
+            onClose={() => setIsEditing(false)}
+            onSuccess={async () => {
+                setIsEditing(false)
+                try {
+                    const res = await axios.get(`${API_BASE_URL}/api/posts/${postId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                    setData(res.data)
+                    if (onUpdate) {
+                        onUpdate({ 
+                            id: postId, 
+                            title: res.data.post.title, 
+                            content: res.data.post.content 
+                        })
+                    }
+                } catch (e) {
+                    console.error(e)
+                }
+            }}
+        />
+    )
   }
 
-    if (isEditing) {
-        return (
-            <CreatePostModal 
-                post={post}
-                onClose={() => setIsEditing(false)}
-                onSuccess={async () => {
-                    setIsEditing(false)
-                    // Re-fetch detail to get updated fields
-                    try {
-                        const res = await axios.get(`${API_BASE_URL}/api/posts/${postId}`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        })
-                        setData(res.data)
-                        // Sync to parent list
-                        if (onUpdate) {
-                            onUpdate({ 
-                                id: postId, 
-                                title: res.data.post.title, 
-                                content: res.data.post.content 
-                            })
-                        }
-                    } catch (e) {
-                        console.error(e)
-                    }
-                }}
-            />
-        )
-      }
-    
-      return (
-        <div className="h-full flex flex-col bg-white relative">
-            <div className="absolute top-0 w-full z-20 flex justify-between items-center p-4 bg-gradient-to-b from-black/40 to-transparent pointer-events-none">              <button onClick={onClose} className="bg-white/20 backdrop-blur-md text-white p-2 rounded-full pointer-events-auto hover:bg-white/30 transition-colors">
-                  <ArrowLeft className="w-6 h-6" />
+  const DetailContent = () => (
+      <div className="h-full flex flex-col bg-white relative">
+          <div className="absolute top-0 w-full z-20 flex justify-between items-center p-4 bg-gradient-to-b from-black/40 to-transparent pointer-events-none rounded-t-xl">              
+              <button onClick={onClose} className="bg-white/20 backdrop-blur-md text-white p-2 rounded-full pointer-events-auto hover:bg-white/30 transition-colors">
+                  {isDesktop ? <X className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
               </button>
               
               {isAuthor && (
@@ -297,7 +293,7 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
                                           <button onClick={() => setReplyTo(comment)} className="text-[10px] font-bold text-gray-500 mt-1">Reply</button>
                                       </div>
                                   </div>
-                                  {/* Child Comments (Simplified 1-level nesting for now) */}
+                                  {/* Child Comments */}
                                   {post.comments.filter(r => r.parent_id === comment.id).map(reply => (
                                       <div key={reply.id} className="flex gap-3 items-start mt-3 ml-11">
                                           <img src={reply.author.avatar_url} className="w-6 h-6 rounded-full bg-gray-200" />
@@ -319,7 +315,7 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
               </div>
           </div>
   
-          <div className="absolute bottom-0 w-full bg-white border-t border-gray-100 px-4 py-2 z-20 flex flex-col">
+          <div className="absolute bottom-0 w-full bg-white border-t border-gray-100 px-4 py-2 z-20 flex flex-col rounded-b-xl">
               {replyTo && (
                   <div className="flex justify-between items-center px-2 py-1 bg-gray-50 text-xs text-gray-500 border-b">
                       <span>Replying to {replyTo.author.name}</span>
@@ -351,6 +347,27 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
               </div>
           </div>
       </div>
-    )
+  )
+
+  if (isDesktop) {
+      return (
+          <div 
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+          >
+              <div className="bg-white rounded-xl w-full max-w-[480px] h-[85vh] shadow-2xl relative overflow-hidden flex flex-col">
+                  <DetailContent />
+              </div>
+          </div>
+      )
   }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+        <DetailContent />
+    </div>
+  )
+}
 export default PostDetailModal
