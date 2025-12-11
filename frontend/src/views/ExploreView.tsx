@@ -25,11 +25,8 @@ interface Post {
     images: string[]
     likes: number
     collections: number
-    author: { name: string, avatar_url: string }
+    author: { id: number, name: string, avatar_url: string }
 }
-
-// Updated Categories based on screenshot (Clean Text Style)
-const CATEGORIES = ["Recommend", "Life", "Work", "Food", "Event", "Tech", "Design", "Fun"]
 
 // Mock Data for Icon Grid
 const QUICK_LINKS = [
