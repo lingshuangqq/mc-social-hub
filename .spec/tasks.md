@@ -38,3 +38,31 @@
 - [x] **Task 4.5:** Feature: Notifications
   - [x] Add `Notification` model & triggers.
   - [x] Frontend: Notification List UI.
+
+## Phase 5: Content Discovery & Enhancement (Completed)
+- [x] **Task 5.1: Public User Profile**
+  - Backend: `GET /api/users/{id}` for public profile data.
+  - Frontend: `PublicProfileView.tsx` & Navigation.
+- [x] **Task 5.2: Explore Page (Grid Categories)**
+  - Frontend: `ExploreView.tsx` with Icon Grid & Search Header.
+  - Logic: 'Recommend' sorts by popularity, others filter by tag.
+- [x] **Task 5.3: Post Tagging**
+  - Backend: `analyze_post_content` (Gemini AI) for auto-tagging.
+  - Frontend: CreatePostModal Tag Selector & PostDetailModal Tag Display.
+- [x] **Task 5.4: Bug Fixes & Refinements**
+  - Auto-redirect to new post after creation.
+  - Search clear reset logic.
+  - Explore page refresh sync.
+
+## Phase 6: PC Web Adaptation
+- [ ] **Task 6.1: Responsive Layout & Navigation**
+  - Implement `ResponsiveShell` component.
+  - Show `BottomNav` on mobile (< md), `SideNav` on desktop (>= md).
+  - Adjust main container max-width for desktop (centered).
+- [ ] **Task 6.2: Desktop Modals**
+  - Update `PostDetailModal` and `CreatePostModal` to be centered dialogs on desktop (max-width + backdrop), instead of full-screen.
+- [ ] **Task 6.3: Adaptive Masonry Grid**
+  - Update `MasonryGrid` to support 3 or 4 columns on large screens.
+- [ ] **Task 6.4: Right Sidebar (Widgets)**
+  - Create desktop-only right column.
+  - Add widgets: "Who to follow", "Trending Tags", "User Mini Profile".

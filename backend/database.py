@@ -3,7 +3,13 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 import sys
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./mc_social.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    # Build absolute path to ensure we always use the same DB file regardless of execution directory
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DB_PATH = os.path.join(BASE_DIR, "mc_social.db")
+    DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
 
 # Fix for SQLAlchemy requiring postgresql+asyncpg scheme
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):

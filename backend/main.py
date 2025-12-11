@@ -44,47 +44,70 @@ GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 client = None
 if GOOGLE_CLOUD_PROJECT:
     try:
+        print(f"DEBUG: Initializing Vertex AI Client for project {GOOGLE_CLOUD_PROJECT} in {GOOGLE_CLOUD_LOCATION}...")
         client = genai.Client(
             vertexai=True, 
             project=GOOGLE_CLOUD_PROJECT, 
             location=GOOGLE_CLOUD_LOCATION
         )
+        print("DEBUG: Vertex AI Client initialized successfully.")
     except Exception as e:
         print(f"Failed to initialize Vertex AI Client: {e}")
 
-async def analyze_images(image_paths: List[str]) -> str:
+async def analyze_post_content(images: List[str], title: str, content: str) -> str:
     """
-    Uses Gemini Vision (Vertex AI) to generate search keywords for images.
+    Uses Gemini (Vertex AI) to analyze post content and generate categories/tags.
+    Returns a comma-separated string of tags.
     """
-    if not client or not image_paths:
+    if not client:
+        print("DEBUG: Client is None, skipping AI analysis.")
         return ""
     
+    print(f"DEBUG: Starting AI Analysis for title='{title}'...")
     try:
-        # Prepare images
-        parts = [types.Part.from_text("Describe these images for a search engine index. Include objects, style (e.g. renovation, food, minimalist), colors, and text in the image. Return a single paragraph description followed by 10 key tags.")]
-        
-        for path in image_paths:
+        # Prepare content parts
+        parts = []
+        if title:
+            parts.append(f"Title: {title}")
+        if content:
+            parts.append(f"Content: {content}")
+            
+        parts.append("Task: Analyze the above social media post. 1. Select 1-2 most relevant categories from this list: [Clubs, Events, Market, Welfare, Food, Admin, Logistics, Help, Chat]. 2. Optionally add 1-2 specific descriptive tags (e.g. 'Coffee', 'Hiking') based on the content or images. 3. Return a JSON array of strings. Max 3 tags total. Output ONLY the JSON array.")
+
+        # Process images
+        for path in images:
             if "static/uploads" in path:
                 local_path = path.split("static/uploads")[-1].strip("/")
                 full_path = Path("static/uploads") / local_path
                 if full_path.exists():
                     with open(full_path, "rb") as f:
                         image_data = f.read()
-                        # Simple mime type detection
                         mime_type = "image/jpeg" if full_path.suffix.lower() in ['.jpg', '.jpeg'] else "image/png"
                         parts.append(types.Part.from_bytes(data=image_data, mime_type=mime_type))
         
-        if len(parts) <= 1: # Only text prompt
-            return ""
-
-        # Use a Vertex AI model
+        # Call Gemini
         response = client.models.generate_content(
             model='gemini-1.5-pro-002', 
-            contents=[types.Content(parts=parts)]
+            contents=[types.Content(parts=[types.Part.from_text(p) if isinstance(p, str) else p for p in parts])]
         )
-        return response.text
+        
+        text = response.text.strip()
+        if text.startswith("```"):
+             text = text.split("\n", 1)[1].rsplit("\n", 1)[0]
+        
+        try:
+            tags_list = json.loads(text)
+            if isinstance(tags_list, list):
+                return ", ".join(tags_list[:3]) # Limit to 3 just in case
+        except:
+            print(f"AI Tag Parsing Failed: {text}")
+            return ""
+
+        return ""
     except Exception as e:
-        print(f"Image analysis failed: {e}")
+        print(f"AI Analysis failed with error: {e}")
+        import traceback
+        traceback.print_exc()
         return ""
 
 import sys
@@ -128,6 +151,7 @@ class CreatePostRequest(BaseModel):
     title: Optional[str] = None
     content: str
     images: List[str] = []
+    tags: List[str] = []
 
 class CommentRequest(BaseModel):
     content: str
@@ -236,10 +260,29 @@ async def get_user_stats(user_id: int, db: AsyncSession = Depends(get_db)):
     # Posts
     posts = await db.execute(select(func.count()).select_from(Post).where(Post.user_id == user_id))
     
+    # Total Likes Received (Join PostLike -> Post)
+    likes_received = await db.execute(
+        select(func.count())
+        .select_from(PostLike)
+        .join(Post, PostLike.post_id == Post.id)
+        .where(Post.user_id == user_id)
+    )
+    
+    # Total Collections Received (Join PostCollection -> Post)
+    collections_received = await db.execute(
+        select(func.count())
+        .select_from(PostCollection)
+        .join(Post, PostCollection.post_id == Post.id)
+        .where(Post.user_id == user_id)
+    )
+    
+    total_interaction = (likes_received.scalar() or 0) + (collections_received.scalar() or 0)
+    
     return {
         "followers": followers.scalar(),
         "following": following.scalar(),
-        "posts": posts.scalar()
+        "posts": posts.scalar(),
+        "likes_collected": total_interaction
     }
 
 # Update get_my_profile to use real stats
@@ -252,7 +295,7 @@ async def get_my_profile(user: User = Depends(get_current_user), db: AsyncSessio
             "posts": stats["posts"],
             "following": stats["following"],
             "followers": stats["followers"],
-            "likes_collected": 0 
+            "likes_collected": stats["likes_collected"]
         }
     }
 
@@ -356,9 +399,10 @@ async def admin_reindex_images(db: AsyncSession = Depends(get_db)):
     
     count = 0
     for post in posts:
-        if not post.ai_keywords and post.images:
-            print(f"Analyzing images for Post {post.id}...")
-            keywords = await analyze_images(post.images)
+        if not post.ai_keywords:
+            print(f"Analyzing content for Post {post.id}...")
+            # Use new function
+            keywords = await analyze_post_content(post.images or [], post.title, post.content)
             post.ai_keywords = keywords
             count += 1
             
@@ -373,19 +417,27 @@ async def create_post(request: CreatePostRequest, user: User = Depends(get_curre
     
     # 1. Image Logic: If empty, use default placeholder
     if not images:
-        # Use full URL if GCS is configured (future), or relative static path for now
-        # Assuming frontend can handle relative paths or we prepend base URL
-        # To be safe, let's use the full local URL convention or just the path if frontend handles it.
-        # Based on upload_file logic: return {"url": "http://localhost:8000/static/uploads/..."}
-        # But here we just store the string. Frontend usually expects a URL.
-        # Let's verify how MasonryGrid uses it. It uses src={post.images[0]}. 
-        # So we should store a usable URL.
-        # For simplicity in this environment:
         images = ["/static/default_placeholder.png"]
     
-    if request.images:
-        # Run in background in real app, but for MVP await it (might take 2-3s)
-        ai_keywords = await analyze_images(request.images)
+    # Run AI Analysis (Images + Text)
+    # Even if no images, analyze text for categorization
+    ai_keywords = await analyze_post_content(request.images, request.title, request.content)
+
+    # Append user-selected tags to ai_keywords
+    if request.tags:
+        user_tags_str = ", ".join(request.tags)
+        if ai_keywords:
+            # Avoid duplicates if AI generated same tag
+            existing = set(ai_keywords.split(", "))
+            for t in request.tags:
+                if t not in existing:
+                    ai_keywords += f", {t}"
+        else:
+            ai_keywords = user_tags_str
+            
+    # Fallback: Ensure at least one tag exists
+    if not ai_keywords:
+        ai_keywords = "Life"
 
     new_post = Post(
         user_id=user.id, 
@@ -667,85 +719,33 @@ async def enrich_posts_with_likes(db: AsyncSession, posts: List[Post]):
 
 
 @app.get("/api/feed")
-
-
-
-
-
-
-
-async def get_feed(limit: int = 20, offset: int = 0, db: AsyncSession = Depends(get_db)):
-
-
-
-
-
-
-
-    result = await db.execute(
-
-
-
-
-
-
-
-        select(Post)
-
-
-
-
-
-
-
-        .options(selectinload(Post.author))
-
-
-
-
-
-
-
-        .order_by(Post.created_at.desc())
-
-
-
-
-
-
-
-        .offset(offset)
-
-
-
-
-
-
-
-        .limit(limit)
-
-
-
-
-
-
-
-    )
-
-
-
-
-
-
-
+async def get_feed(limit: int = 20, offset: int = 0, tag: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+    # Base query
+    query = select(Post).options(selectinload(Post.author))
+    
+    if tag == "Recommend":
+        # Hot Logic: Sort by Likes Count
+        query = (
+            query
+            .outerjoin(PostLike)
+            .group_by(Post.id)
+            .order_by(func.count(PostLike.user_id).desc(), Post.created_at.desc())
+        )
+    elif tag and tag != "All":
+        # Tag Search Logic
+        query = query.order_by(Post.created_at.desc()).where(
+            (Post.ai_keywords.ilike(f"%{tag}%")) | 
+            (Post.title.ilike(f"%{tag}%")) |
+            (Post.content.ilike(f"%{tag}%"))
+        )
+    else:
+        # Default: Latest
+        query = query.order_by(Post.created_at.desc())
+    
+    query = query.offset(offset).limit(limit)
+    
+    result = await db.execute(query)
     posts = result.scalars().all()
-
-
-
-
-
-
-
     return await enrich_posts_with_likes(db, posts)
 
 
@@ -949,16 +949,13 @@ async def toggle_collect(post_id: int, user: User = Depends(get_current_user), d
 
 
     else:
-
-
-
         db.add(PostCollection(post_id=post_id, user_id=user.id))
-
-
-
         collected = True
-
-
+        
+        # Notify Author
+        post = await db.get(Post, post_id)
+        if post:
+            await create_notification(db, post.user_id, user.id, "collect", post_id)
 
     await db.commit()
 
@@ -1239,7 +1236,7 @@ async def get_user_profile(user_id: int, current_user: User = Depends(get_curren
             "posts": stats["posts"],
             "following": stats["following"],
             "followers": stats["followers"],
-            "likes_collected": 0 # TODO: Implement real count if needed
+            "likes_collected": stats["likes_collected"]
         },
         "is_following": is_following
     }

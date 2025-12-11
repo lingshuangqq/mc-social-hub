@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MapPin, Briefcase, ArrowLeft, UserPlus, UserCheck } from 'lucide-react'
+import { ArrowLeft, MapPin, Briefcase, Share2 } from 'lucide-react'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 import { API_BASE_URL } from '../config'
@@ -16,6 +16,7 @@ interface UserProfile {
         id: number
         name: string
         avatar_url: string
+        email: string
         bio?: string
         title?: string
         location?: string
@@ -24,6 +25,7 @@ interface UserProfile {
         posts: number
         following: number
         followers: number
+        likes_collected: number
     }
     is_following: boolean
 }
@@ -37,11 +39,8 @@ interface Props {
 const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
   const [data, setData] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const { token, user: currentUser } = useAuthStore()
-
-  // If viewing self, we might want to redirect? 
-  // But for now, just render it (button will be disabled or hidden).
 
   useEffect(() => {
       fetchProfile()
@@ -50,7 +49,9 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
 
   const fetchProfile = async () => {
       try {
-          const res = await axios.get(`${API_BASE_URL}/api/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
+          const res = await axios.get(`${API_BASE_URL}/api/users/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+          })
           setData(res.data)
       } catch (e) {
           console.error("Failed to fetch profile", e)
@@ -59,55 +60,60 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
 
   const fetchPosts = async () => {
       try {
-          const res = await axios.get(`${API_BASE_URL}/api/users/${userId}/posts`, { headers: { Authorization: `Bearer ${token}` } })
+          const res = await axios.get(`${API_BASE_URL}/api/users/${userId}/posts`, {
+              headers: { Authorization: `Bearer ${token}` }
+          })
           setPosts(res.data)
       } catch (e) {
-          console.error(e)
-      } finally {
-          setLoading(false)
+          console.error("Failed to fetch user posts", e)
       }
   }
 
-  const handleFollowToggle = async () => {
+  const handleFollow = async () => {
       if (!data) return
       
-      const oldIsFollowing = data.is_following
+      const originalState = data.is_following
       // Optimistic update
-      setData(prev => prev ? ({
-          ...prev,
-          is_following: !oldIsFollowing,
+      setData(prev => prev ? {
+          ...prev, 
+          is_following: !prev.is_following,
           stats: {
               ...prev.stats,
-              followers: oldIsFollowing ? prev.stats.followers - 1 : prev.stats.followers + 1
+              followers: prev.is_following ? prev.stats.followers - 1 : prev.stats.followers + 1
           }
-      }) : null)
+      } : null)
 
       try {
-          if (oldIsFollowing) {
+          if (originalState) {
               await axios.delete(`${API_BASE_URL}/api/users/${userId}/follow`, { headers: { Authorization: `Bearer ${token}` } })
           } else {
               await axios.post(`${API_BASE_URL}/api/users/${userId}/follow`, {}, { headers: { Authorization: `Bearer ${token}` } })
           }
       } catch (e) {
-          // Revert on error
-          console.error(e)
-          fetchProfile() // Refresh to be safe
+          console.error("Follow action failed", e)
+          // Revert on error (could be improved)
+          fetchProfile() 
       }
   }
 
-  if (loading) return <div className="h-full flex items-center justify-center">Loading...</div>
-  if (!data) return <div className="h-full flex items-center justify-center">User not found</div>
+  if (!data) return <div className="h-full flex items-center justify-center">Loading...</div>
 
   const { user, stats, is_following } = data
   const isMe = currentUser?.id === user.id
 
   return (
-    <div className="h-full flex flex-col bg-white animate-in slide-in-from-right duration-200">
+    <div className="h-full flex flex-col bg-white animate-in slide-in-from-right duration-300">
        {/* Banner Area */}
-       <div className="h-32 bg-gradient-to-r from-slate-700 to-slate-900 relative">
-           <button onClick={onBack} className="absolute top-4 left-4 text-white bg-black/20 p-2 rounded-full backdrop-blur-sm">
+       <div className="h-32 bg-gradient-to-r from-mc-navy to-blue-800 relative">
+           <button 
+                onClick={onBack}
+                className="absolute top-4 left-4 text-white p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors"
+           >
                <ArrowLeft className="w-5 h-5" />
            </button>
+           <div className="absolute top-4 right-4 flex gap-3 text-white">
+               <Share2 className="w-5 h-5" />
+           </div>
        </div>
 
        {/* Header Info */}
@@ -117,34 +123,29 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
            </div>
            
            <div className="pt-12">
-               <div className="flex items-center justify-between pr-4">
-                   <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
+               <div className="flex items-start justify-between pr-0">
+                   <div>
+                        <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 mb-2">
+                            <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" /> {user.title || 'Master Concept'}</span>
+                            <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {user.location || 'Hong Kong'}</span>
+                        </div>
+                   </div>
+                   
                    {!isMe && (
                        <button 
-                           onClick={handleFollowToggle}
-                           className={`px-6 py-1.5 rounded-full text-sm font-bold transition-colors flex items-center gap-2 ${
-                               is_following 
-                               ? 'border border-gray-300 text-gray-600 bg-white' 
-                               : 'bg-mc-orange text-white border border-transparent'
-                           }`}
+                           onClick={handleFollow}
+                           className={`
+                                px-6 py-1.5 rounded-full text-sm font-bold transition-all
+                                ${is_following 
+                                    ? 'bg-gray-100 text-gray-600 border border-gray-200' 
+                                    : 'bg-mc-orange text-white shadow-sm hover:opacity-90'
+                                }
+                           `}
                        >
-                           {is_following ? (
-                               <>
-                                <UserCheck className="w-4 h-4" />
-                                Following
-                               </>
-                           ) : (
-                               <>
-                                <UserPlus className="w-4 h-4" />
-                                Follow
-                               </>
-                           )}
+                           {is_following ? 'Following' : 'Follow'}
                        </button>
                    )}
-               </div>
-               <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 mb-3">
-                   <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" /> {user.title || 'Master Concept'}</span>
-                   <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {user.location || 'Hong Kong'}</span>
                </div>
                
                <p className="text-sm text-gray-700 mb-4 whitespace-pre-wrap">{user.bio || "No bio yet."}</p>
@@ -159,19 +160,19 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
                        <span className="text-xs text-gray-500">Followers</span>
                    </div>
                    <div className="flex flex-col items-center">
-                       <span className="font-bold text-gray-900">{stats.posts}</span>
-                       <span className="text-xs text-gray-500">Posts</span>
+                       <span className="font-bold text-gray-900">{stats.likes_collected}</span>
+                       <span className="text-xs text-gray-500">Likes & Collects</span>
                    </div>
                </div>
            </div>
        </div>
 
-       {/* Simple Tab Header */}
+       {/* Tabs (Simplified for Public View - Just "Posts") */}
        <div className="flex border-b border-gray-100 sticky top-0 bg-white z-10">
-           <div className="flex-1 py-3 text-sm font-bold text-center relative text-gray-900">
+           <button className="flex-1 py-3 text-sm font-bold text-center relative text-gray-900">
                Posts
                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-mc-orange rounded-full" />
-           </div>
+           </button>
        </div>
 
        {/* Content Grid */}
@@ -186,8 +187,10 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
                             onClick={() => onPostClick(post.id)}
                             className="aspect-[3/4] bg-white relative cursor-pointer"
                        >
-                           {post.images && post.images.length > 0 && (
+                           {post.images && post.images.length > 0 ? (
                                <img src={post.images[0]} className="w-full h-full object-cover" />
+                           ) : (
+                               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs">Text</div>
                            )}
                            {post.title && (
                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2">

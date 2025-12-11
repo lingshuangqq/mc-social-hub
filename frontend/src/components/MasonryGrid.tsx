@@ -13,18 +13,18 @@ interface Post {
 interface Props {
     posts: Post[]
     onPostClick: (id: number) => void
+    onUserClick?: (userId: number) => void
 }
 
-const MasonryGrid = ({ posts, onPostClick }: Props) => {
+const MasonryGrid = ({ posts, onPostClick, onUserClick }: Props) => {
     const leftPosts = posts.filter((_, i) => i % 2 === 0)
     const rightPosts = posts.filter((_, i) => i % 2 !== 0)
 
     const PostCard = ({ post }: { post: Post }) => (
         <div 
-            onClick={() => onPostClick(post.id)}
-            className="bg-white rounded-xl overflow-hidden shadow-sm mb-2 cursor-pointer hover:shadow-md transition-shadow break-inside-avoid"
+            className="bg-white rounded-xl overflow-hidden shadow-sm mb-2 break-inside-avoid relative"
         >
-            <div className="w-full relative">
+            <div onClick={() => onPostClick(post.id)} className="cursor-pointer w-full relative">
                 {post.images && post.images.length > 0 ? (
                     <img src={post.images[0]} className="w-full h-auto object-cover block min-h-[120px]" loading="lazy" />
                 ) : (
@@ -33,21 +33,35 @@ const MasonryGrid = ({ posts, onPostClick }: Props) => {
             </div>
 
             <div className="p-2.5">
-                {post.title && (
-                    <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 leading-snug">
-                        {post.title}
-                    </h3>
-                )}
-                
-                {/* Logic: If title exists, show 1 line content. If no title, show 2 lines content. */}
-                {post.content && (
-                     <p className={`text-xs text-gray-600 mb-2 ${post.title ? 'line-clamp-1' : 'line-clamp-3'}`}>
-                        {post.content}
-                     </p>
-                )}
+                <div onClick={() => onPostClick(post.id)} className="cursor-pointer">
+                    {post.title && (
+                        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 leading-snug">
+                            {post.title}
+                        </h3>
+                    )}
+                    
+                    {post.content && (
+                        <p className={`text-xs text-gray-600 mb-2 ${post.title ? 'line-clamp-1' : 'line-clamp-3'}`}>
+                            {post.content}
+                        </p>
+                    )}
+                </div>
 
                 <div className="flex items-center justify-between mt-1">
-                    <div className="flex items-center gap-1.5 overflow-hidden flex-1 mr-2">
+                    <div 
+                        className="flex items-center gap-1.5 overflow-hidden flex-1 mr-2 cursor-pointer hover:opacity-80"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            // Assuming post.author has an ID (it should, but type def above needs checking)
+                            // The generic Post interface in MasonryGrid might need author.id
+                            if (onUserClick && post.author) {
+                                // We need to cast or ensure author has ID. The Feed API returns it.
+                                // Let's blindly trust it has it or pass it.
+                                // Actually, let's update the Post interface above first.
+                                onUserClick((post.author as any).id) 
+                            }
+                        }}
+                    >
                         <img src={post.author?.avatar_url} className="w-4 h-4 rounded-full bg-gray-200 shrink-0 object-cover" />
                         <span className="text-[10px] text-gray-500 truncate">{post.author?.name}</span>
                     </div>

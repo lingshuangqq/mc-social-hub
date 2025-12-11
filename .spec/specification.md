@@ -40,7 +40,40 @@
 - **Tabs:** "My Posts" | "Collects".
 - **Content:** Reuses Masonry Grid component.
 
-## 6. Design System
+## 6. Public User Profile
+- **Purpose:** Allow users to view other users' profiles.
+- **Entry Point:** Clicking on an author's avatar/name in Feed or Post Detail.
+- **UI:** Similar to user's own profile, but includes:
+  - "Follow / Unfollow" button.
+  - Only public-facing stats (e.g., Posts, Followers, Following, Total Likes & Collects on their posts).
+- **API:**
+  - `GET /api/users/{id}`: Fetch user profile and `is_following` status.
+  - `GET /api/users/{id}/posts`: Fetch user's public posts.
+
+## 7. Explore Page (Topics/Tags)
+- **Purpose:** Discover content by predefined themes or tags.
+- **UI:** Top section with a grid of categorical icons (e.g., Life, Work, Food, Event, Tech), acting as filters.
+- **Content:** Below the category grid, a Masonry Grid displays posts filtered by the selected category.
+- **API:** `GET /api/feed?tag={category_name}`: Filter posts by keyword/tag (matching `ai_keywords`, `title`, or `content`).
+
+## 8. Notifications System
+- **Purpose:** Inform users about interactions (likes, comments, follows, collects).
+- **API:**
+  - `POST /api/posts/{post_id}/like`: Triggers `like` notification.
+  - `POST /api/posts/{post_id}/collect`: Triggers `collect` notification.
+  - `POST /api/posts/{post_id}/comments`: Triggers `comment` notification.
+  - `POST /api/users/{target_id}/follow`: Triggers `follow` notification.
+  - `GET /api/notifications`: Fetch user notifications.
+  - `POST /api/notifications/read`: Mark notifications as read.
+- **UI:** `NotificationsView.tsx` handles display with appropriate icons and text for each notification type.
+
+## 9. System Improvements & Bug Fixes
+- **Authentication:** `qianqianyinian@gmail.com` added to allowlist.
+- **Data Consistency:** Ensured correct calculation of "Likes & Collects" stats on user profiles.
+- **API Robustness:** Fixed backend routing ambiguity to prevent 422 errors.
+- **Database Path:** Standardized SQLite database path to use an absolute path, preventing database file inconsistencies due to varying execution directories.
+
+## 10. Design System
 - **Colors:** MC Navy (#002A54) & MC Orange (#F58220).
 - **Typography:** Inter/System Stack.
 - **Interaction:** Optimistic UI for all toggle actions (Like/Collect).

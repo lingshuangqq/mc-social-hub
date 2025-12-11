@@ -5,6 +5,7 @@ import CreatePostModal from './views/CreatePostModal'
 import PostDetailModal from './views/PostDetailModal'
 import PublicProfileView from './views/PublicProfileView'
 import ProfileView from './views/ProfileView'
+import ExploreView from './views/ExploreView'
 import MasonryGrid from './components/MasonryGrid'
 import BottomNav from './components/BottomNav'
 import SettingsView from './views/SettingsView'
@@ -27,7 +28,7 @@ interface Post {
 const PAGE_SIZE = 10;
 
 // Define tabs explicitly
-type ActiveTab = 'feed' | 'profile' | 'settings' | 'notifications';
+type ActiveTab = 'feed' | 'explore' | 'profile' | 'settings' | 'notifications';
 
 function App() {
   const user = useAuthStore(state => state.user)
@@ -47,17 +48,6 @@ function App() {
   const [isSearching, setIsSearching] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Initial Load & Refresh & Notifications
-  useEffect(() => {
-      if (user) {
-          if (activeTab === 'feed' && !searchQuery) {
-              loadPosts(true)
-          }
-          // Poll notifications (Mock poll, ideally socket or just once on load)
-          fetchNotificationsCount()
-      }
-  }, [user, refreshKey, activeTab])
-
   const fetchNotificationsCount = async () => {
       if (!user) return
       try {
@@ -71,19 +61,29 @@ function App() {
       }
   }
 
-  // Search Logic (Separate from feed pagination for now)
+  // Combined Feed & Search Logic
   useEffect(() => {
-    if (user && activeTab === 'feed' && searchQuery) {
-        setIsSearching(true)
-        axios.get(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`)
-            .then(res => {
-                setPosts(res.data)
-                setHasMore(false) // Search doesn't support pagination yet
-            })
-            .catch(err => console.error(err))
-            .finally(() => setIsSearching(false))
-    }
-  }, [searchQuery, user, activeTab])
+      if (!user) return
+
+      // Only auto-load for 'feed' tab here. 'explore' handles its own loading.
+      if (activeTab === 'feed') {
+          if (searchQuery) {
+              setIsSearching(true)
+              axios.get(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`)
+                  .then(res => {
+                      setPosts(res.data)
+                      setHasMore(false) // Search endpoint doesn't support pagination yet
+                  })
+                  .catch(err => console.error(err))
+                  .finally(() => setIsSearching(false))
+          } else {
+              // Load normal feed (init or reset from search)
+              loadPosts(true)
+          }
+          // Poll notifications
+          fetchNotificationsCount()
+      }
+  }, [user, refreshKey, activeTab, searchQuery])
 
   const loadPosts = async (reset = false) => {
       if (!user) return
@@ -154,8 +154,8 @@ function App() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-       {/* Only show global header in Feed tab */}
-       {activeTab === 'feed' && !selectedPostId && !publicProfileId && (
+       {/* Only show global header in Feed and Explore tabs */}
+       {(activeTab === 'feed' || activeTab === 'explore') && !selectedPostId && !publicProfileId && (
            <header className="bg-white px-4 py-3 flex items-center sticky top-0 z-10 border-b border-gray-100 gap-3">
                <div className="flex-1 relative">
                    <form onSubmit={handleSearch} className="relative">
@@ -227,11 +227,21 @@ function App() {
                                     <p className="text-xs mt-1">Be the first to share!</p>
                                 </div>
                             ) : (
-                                <MasonryGrid posts={posts} onPostClick={setSelectedPostId} />
+                                <MasonryGrid 
+                                    posts={posts} 
+                                    onPostClick={setSelectedPostId} 
+                                    onUserClick={setPublicProfileId}
+                                />
                             )}
                        </InfiniteScroll>
                    )}
                </div>
+           ) : activeTab === 'explore' ? (
+               <ExploreView 
+                   onPostClick={setSelectedPostId} 
+                   onUserClick={setPublicProfileId}
+                   refreshTrigger={refreshKey}
+               />
            ) : activeTab === 'profile' ? (
                <ProfileView 
                   onPostClick={setSelectedPostId} 
@@ -258,7 +268,12 @@ function App() {
        {isCreating && (
            <CreatePostModal 
                onClose={() => setIsCreating(false)} 
-               onSuccess={() => setRefreshKey(k => k + 1)} 
+               onSuccess={(newPostId) => {
+                   setRefreshKey(k => k + 1)
+                   if (newPostId) {
+                       setSelectedPostId(newPostId)
+                   }
+               }} 
            />
        )}
     </div>

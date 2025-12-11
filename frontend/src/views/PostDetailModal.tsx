@@ -36,6 +36,7 @@ interface PostDetail {
         created_at: string
         author: { id: number, name: string, avatar_url: string }
         comments: Comment[]
+        ai_keywords?: string
     }
     is_liked: boolean
     is_collected: boolean
@@ -263,6 +264,17 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
   
                   {post.title && <h1 className="text-lg font-bold text-gray-900 mb-2">{post.title}</h1>}
                   <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4">{post.content}</p>
+                  
+                  {post.ai_keywords && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                          {post.ai_keywords.split(',').map((tag, idx) => (
+                              <span key={idx} className="bg-blue-50 text-mc-navy text-xs px-2 py-0.5 rounded-md font-medium">
+                                  #{tag.trim()}
+                              </span>
+                          ))}
+                      </div>
+                  )}
+
                   <p className="text-xs text-gray-400 mb-6 pb-4 border-b border-gray-100">
                       {new Date(post.created_at).toLocaleDateString()}
                   </p>

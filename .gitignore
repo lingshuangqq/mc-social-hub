@@ -10,4 +10,5 @@ dist/
 .vscode/
 *.db
 *.sqlite3
-static/uploads/
+backend/static/uploads/
+backend/mc_social.db

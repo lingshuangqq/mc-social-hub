@@ -13,7 +13,7 @@ interface Post {
 
 interface Props {
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (newPostId?: number) => void
   post?: Post // Optional: If provided, we are in Edit Mode
 }
 
@@ -22,11 +22,17 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
   const [previews, setPreviews] = useState<string[]>(post?.images || [])
   const [title, setTitle] = useState(post?.title || '')
   const [content, setContent] = useState(post?.content || '')
+  const [tags, setTags] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const token = useAuthStore(state => state.token)
 
   const isEditMode = !!post
+  const POST_TAGS = ["Life", "Work", "Event", "Food", "Fun", "Tech", "Design", "Market"]
+
+  const toggleTag = (tag: string) => {
+      setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -65,16 +71,18 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
           }
 
           // 2. Create Post
-          await axios.post(`${API_BASE_URL}/api/posts`, {
+          const res = await axios.post(`${API_BASE_URL}/api/posts`, {
             title: title || null,
             content: content,
-            images: imageUrls
+            images: imageUrls,
+            tags: tags
           }, {
             headers: { Authorization: `Bearer ${token}` }
           })
+          
+          onSuccess(res.data.id)
       }
 
-      onSuccess()
       onClose()
     } catch (e) {
       console.error("Post failed", e)
@@ -149,8 +157,32 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
           value={content}
           onChange={e => setContent(e.target.value)}
           placeholder="Share your moment..." 
-          className="w-full h-40 resize-none outline-none text-base placeholder:text-gray-400"
+          className="w-full h-40 resize-none outline-none text-base placeholder:text-gray-400 mb-4"
         />
+
+        {/* Tag Selector */}
+        {!isEditMode && (
+            <div>
+                <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Add Tags</p>
+                <div className="flex flex-wrap gap-2">
+                    {POST_TAGS.map(tag => (
+                        <button
+                            key={tag}
+                            onClick={() => toggleTag(tag)}
+                            className={`
+                                px-3 py-1.5 rounded-full text-xs font-medium transition-colors border
+                                ${tags.includes(tag) 
+                                    ? 'bg-mc-navy text-white border-mc-navy' 
+                                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                                }
+                            `}
+                        >
+                            #{tag}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )}
       </div>
     </div>
   )

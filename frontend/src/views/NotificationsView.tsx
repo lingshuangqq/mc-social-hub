@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Heart, MessageCircle, User } from 'lucide-react'
+import { Heart, MessageCircle, User, Star } from 'lucide-react'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 import { API_BASE_URL } from '../config'
@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns'
 
 interface Notification {
     id: number
-    type: 'like' | 'comment' | 'follow'
+    type: 'like' | 'comment' | 'follow' | 'collect'
     sender: { name: string, avatar_url: string }
     post_id?: number
     post?: { title: string, images: string[] }
@@ -54,6 +54,7 @@ const NotificationsView = ({ onPostClick }: Props) => {
             case 'like': return <Heart className="w-4 h-4 fill-mc-orange text-mc-orange" />
             case 'comment': return <MessageCircle className="w-4 h-4 fill-blue-500 text-blue-500" />
             case 'follow': return <User className="w-4 h-4 fill-green-500 text-green-500" />
+            case 'collect': return <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
             default: return <div className="w-4 h-4 bg-gray-300 rounded-full" />
         }
     }
@@ -63,6 +64,7 @@ const NotificationsView = ({ onPostClick }: Props) => {
             case 'like': return `liked your post.`
             case 'comment': return `commented on your post.`
             case 'follow': return `started following you.`
+            case 'collect': return `collected your post.`
             default: return 'interacted with you.'
         }
     }
