@@ -12,3 +12,4 @@ google-genai
 asyncpg
 google-cloud-storage
 python-multipart
+Pillow

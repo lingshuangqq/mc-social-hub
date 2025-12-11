@@ -14,43 +14,43 @@ mode: STANDARD_REPOSITORY
 name: projects/gen-media-veo-test/locations/us-central1/repositories/mc-social-repo
 registryUri: us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo
 satisfiesPzi: true
-updateTime: '2025-12-11T06:14:23.733410Z'
+updateTime: '2025-12-11T06:29:22.152875Z'
 vulnerabilityScanningConfig:
   enablementState: SCANNING_DISABLED
   enablementStateReason: API containerscanning.googleapis.com is not enabled.
   lastEnableTime: '2025-12-05T04:00:44.572231038Z'
-Creating temporary archive of 72 file(s) totalling 1.4 MiB before compression.
+Creating temporary archive of 72 file(s) totalling 1.5 MiB before compression.
 Some files were not included in the source upload.
 
-Check the gcloud log [/Users/amylu/.config/gcloud/logs/2025.12.11/14.27.54.166378.log] to see which files and the contents of the
+Check the gcloud log [/Users/amylu/.config/gcloud/logs/2025.12.11/14.52.25.611194.log] to see which files and the contents of the
 default gcloudignore file used (see `$ gcloud topic gcloudignore` to learn
 more).
 
-Uploading tarball of [.] to [gs://gen-media-veo-test_cloudbuild/source/1765434474.378174-4f156fb8e9254e7595d8a8e37df5d7af.tgz]
-Created [https://cloudbuild.googleapis.com/v1/projects/gen-media-veo-test/locations/global/builds/a4a71fcc-1242-4b71-a853-57e18eb0ae13].
-Logs are available at [ https://console.cloud.google.com/cloud-build/builds/a4a71fcc-1242-4b71-a853-57e18eb0ae13?project=961699257299 ].
+Uploading tarball of [.] to [gs://gen-media-veo-test_cloudbuild/source/1765435945.956075-ec3fe84a399f4972bf2eb537b9fd9639.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/gen-media-veo-test/locations/global/builds/15a2be88-8e47-4665-aa30-a58d8a361def].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/15a2be88-8e47-4665-aa30-a58d8a361def?project=961699257299 ].
 Waiting for build to complete. Polling interval: 1 second(s).
 ------------------------------------ REMOTE BUILD OUTPUT ------------------------------------
-starting build "a4a71fcc-1242-4b71-a853-57e18eb0ae13"
+starting build "15a2be88-8e47-4665-aa30-a58d8a361def"
 
 FETCHSOURCE
-Fetching storage object: gs://gen-media-veo-test_cloudbuild/source/1765434474.378174-4f156fb8e9254e7595d8a8e37df5d7af.tgz#1765434476810667
-Copying gs://gen-media-veo-test_cloudbuild/source/1765434474.378174-4f156fb8e9254e7595d8a8e37df5d7af.tgz#1765434476810667...
-/ [0 files][    0.0 B/  1.1 MiB]                                                / [1 files][  1.1 MiB/  1.1 MiB]                                                
-Operation completed over 1 objects/1.1 MiB.                                      
+Fetching storage object: gs://gen-media-veo-test_cloudbuild/source/1765435945.956075-ec3fe84a399f4972bf2eb537b9fd9639.tgz#1765435948492474
+Copying gs://gen-media-veo-test_cloudbuild/source/1765435945.956075-ec3fe84a399f4972bf2eb537b9fd9639.tgz#1765435948492474...
+/ [0 files][    0.0 B/  1.2 MiB]                                                / [1 files][  1.2 MiB/  1.2 MiB]                                                
+Operation completed over 1 objects/1.2 MiB.
 BUILD
 Already have image (with digest): gcr.io/cloud-builders/docker
-Sending build context to Docker daemon  1.551MB
+Sending build context to Docker daemon  1.631MB
 Step 1/15 : FROM node:18-alpine as frontend-build
 18-alpine: Pulling from library/node
 f18232174bc9: Pulling fs layer
 dd71dde834b5: Pulling fs layer
 1e5a4c89cee5: Pulling fs layer
 25ff2da83641: Pulling fs layer
-25ff2da83641: Verifying Checksum
-25ff2da83641: Download complete
 1e5a4c89cee5: Verifying Checksum
 1e5a4c89cee5: Download complete
+25ff2da83641: Verifying Checksum
+25ff2da83641: Download complete
 f18232174bc9: Verifying Checksum
 f18232174bc9: Download complete
 f18232174bc9: Pull complete
@@ -63,15 +63,15 @@ Digest: sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
 Status: Downloaded newer image for node:18-alpine
  ---> ee77c6cd7c18
 Step 2/15 : WORKDIR /app/frontend
- ---> Running in 44b63b98cf2c
-Removing intermediate container 44b63b98cf2c
- ---> b2eae95f96d5
+ ---> Running in 5f057673f72a
+Removing intermediate container 5f057673f72a
+ ---> 873ed01e60d4
 Step 3/15 : COPY frontend/package*.json ./
- ---> e1de916194b5
+ ---> c1c2ae02de6b
 Step 4/15 : RUN npm install
- ---> Running in c6b3425bb859
+ ---> Running in 7042438b1754
 
-added 181 packages, and audited 182 packages in 6s
+added 181 packages, and audited 182 packages in 10s
 
 32 packages are looking for funding
   run `npm fund` for details
@@ -87,12 +87,12 @@ npm notice New major version of npm available! 10.8.2 -> 11.7.0
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
 npm notice To update run: npm install -g npm@11.7.0
 npm notice
-[0mRemoving intermediate container c6b3425bb859
- ---> a079a4559421
+[0mRemoving intermediate container 7042438b1754
+ ---> d48beaae0007
 Step 5/15 : COPY frontend/ ./
- ---> f231031c9af1
+ ---> b89b23933c14
 Step 6/15 : RUN npm run build
- ---> Running in 3501e5cae2a8
+ ---> Running in 201b6bcd934c
 
 > mc-social-hub-frontend@0.0.0 build
 > tsc && vite build
@@ -101,12 +101,12 @@ transforming...
 ✓ 1784 modules transformed.
 rendering chunks...
 computing gzip size...
-dist/index.html                   0.48 kB │ gzip:   0.31 kB
-dist/assets/index-CHS_nYUh.css   36.92 kB │ gzip:   7.17 kB
-dist/assets/index-uKlf-N8f.js   317.93 kB │ gzip: 100.04 kB
-✓ built in 4.03s
-Removing intermediate container 3501e5cae2a8
- ---> f82381cfb2b8
+dist/index.html                   0.53 kB │ gzip:   0.32 kB
+dist/assets/index-DI0VfKHX.css   36.95 kB │ gzip:   7.18 kB
+dist/assets/index-DsLOPff-.js   317.91 kB │ gzip: 100.04 kB
+✓ built in 7.81s
+Removing intermediate container 201b6bcd934c
+ ---> 831074e07596
 Step 7/15 : FROM python:3.12-slim
 3.12-slim: Pulling from library/python
 1733a4cd5954: Already exists
@@ -115,10 +115,10 @@ dfff024aded8: Pulling fs layer
 1f384a3df500: Pulling fs layer
 1f384a3df500: Verifying Checksum
 1f384a3df500: Download complete
-89933f780550: Verifying Checksum
-89933f780550: Download complete
 dfff024aded8: Verifying Checksum
 dfff024aded8: Download complete
+89933f780550: Verifying Checksum
+89933f780550: Download complete
 dfff024aded8: Pull complete
 89933f780550: Pull complete
 1f384a3df500: Pull complete
@@ -126,18 +126,18 @@ Digest: sha256:590cad70271b6c1795c6a11fb5c110efca593adbd0d4883cd19c36df6a56467b
 Status: Downloaded newer image for python:3.12-slim
  ---> bf1953a9427f
 Step 8/15 : WORKDIR /app
- ---> Running in 612fa7d8a7b0
-Removing intermediate container 612fa7d8a7b0
- ---> b7b56ac5c203
+ ---> Running in c265c866cddc
+Removing intermediate container c265c866cddc
+ ---> bd47f624396f
 Step 9/15 : RUN apt-get update && apt-get install -y libpq-dev gcc
- ---> Running in f915e0a4575c
+ ---> Running in 11f0d0f6b2f7
 Hit:1 http://deb.debian.org/debian trixie InRelease
 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9670 kB]
 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [82.1 kB]
-Fetched 9848 kB in 1s (9880 kB/s)
+Fetched 9848 kB in 1s (6883 kB/s)
 Reading package lists...
 Reading package lists...
 Building dependency tree...
@@ -236,7 +236,7 @@ debconf: falling back to frontend: Teletype
 [0m[91mdebconf: unable to initialize frontend: Teletype
 debconf: (This frontend requires a controlling tty.)
 debconf: falling back to frontend: Noninteractive
-[0mFetched 64.8 MB in 1s (124 MB/s)
+[0mFetched 64.8 MB in 1s (109 MB/s)
 Selecting previously unselected package krb5-locales.
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5644 files and directories currently installed.)
 Preparing to unpack .../00-krb5-locales_1.21.3-5_all.deb ...
@@ -451,12 +451,12 @@ Setting up gcc-x86-64-linux-gnu (4:14.2.0-1) ...
 Setting up gcc-14 (14.2.0-19) ...
 Setting up gcc (4:14.2.0-1) ...
 Processing triggers for libc-bin (2.41-12) ...
-Removing intermediate container f915e0a4575c
- ---> 31e8189972e7
+Removing intermediate container 11f0d0f6b2f7
+ ---> f2dca80f858d
 Step 10/15 : COPY backend/requirements.txt .
- ---> b41e93e11449
+ ---> f19d6c69a278
 Step 11/15 : RUN pip install --no-cache-dir -r requirements.txt
- ---> Running in 4fad1a53a75b
+ ---> Running in 8ecfe7d5ed16
 Collecting fastapi (from -r requirements.txt (line 1))
   Downloading fastapi-0.124.2-py3-none-any.whl.metadata (30 kB)
 Collecting uvicorn (from -r requirements.txt (line 2))
@@ -564,7 +564,7 @@ Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptog
 Downloading fastapi-0.124.2-py3-none-any.whl (112 kB)
 Downloading uvicorn-0.38.0-py3-none-any.whl (68 kB)
 Downloading sqlalchemy-2.0.45-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.3 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 51.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 293.4 MB/s eta 0:00:00
 Downloading aiosqlite-0.21.0-py3-none-any.whl (15 kB)
 Downloading python_dotenv-1.2.1-py3-none-any.whl (21 kB)
 Downloading google_auth-2.43.0-py2.py3-none-any.whl (223 kB)
@@ -572,11 +572,11 @@ Downloading requests-2.32.5-py3-none-any.whl (64 kB)
 Downloading alembic-1.17.2-py3-none-any.whl (248 kB)
 Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
 Downloading pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 153.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 473.1 MB/s eta 0:00:00
 Downloading google_genai-1.55.0-py3-none-any.whl (703 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 703.4/703.4 kB 180.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 703.4/703.4 kB 472.7 MB/s eta 0:00:00
 Downloading asyncpg-0.31.0-cp312-cp312-manylinux_2_28_x86_64.whl (3.5 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.5/3.5 MB 190.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.5/3.5 MB 233.7 MB/s eta 0:00:00
 Downloading google_cloud_storage-3.7.0-py3-none-any.whl (303 kB)
 Downloading python_multipart-0.0.20-py3-none-any.whl (24 kB)
 Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
@@ -587,7 +587,7 @@ Downloading certifi-2025.11.12-py3-none-any.whl (159 kB)
 Downloading charset_normalizer-3.4.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (153 kB)
 Downloading click-8.3.1-py3-none-any.whl (108 kB)
 Downloading cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 199.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 400.3 MB/s eta 0:00:00
 Downloading distro-1.9.0-py3-none-any.whl (20 kB)
 Downloading ecdsa-0.19.1-py2.py3-none-any.whl (150 kB)
 Downloading google_api_core-2.28.1-py3-none-any.whl (173 kB)
@@ -595,7 +595,7 @@ Downloading google_cloud_core-2.5.0-py3-none-any.whl (29 kB)
 Downloading google_crc32c-1.7.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (32 kB)
 Downloading google_resumable_media-2.8.0-py3-none-any.whl (81 kB)
 Downloading greenlet-3.3.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (609 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 609.9/609.9 kB 452.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 609.9/609.9 kB 402.6 MB/s eta 0:00:00
 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
@@ -625,58 +625,58 @@ Successfully installed Mako-1.3.10 MarkupSafe-3.0.3 aiosqlite-0.21.0 alembic-1.1
 [0m[91m
 [notice] A new release of pip is available: 25.0.1 -> 25.3
 [notice] To update, run: pip install --upgrade pip
-[0mRemoving intermediate container 4fad1a53a75b
- ---> 2e93db1c2405
+[0mRemoving intermediate container 8ecfe7d5ed16
+ ---> 378f14f82716
 Step 12/15 : COPY backend/ .
- ---> 552a1153fbeb
+ ---> 8c983ca4ccc6
 Step 13/15 : COPY --from=frontend-build /app/frontend/dist ../frontend/dist
- ---> 7afa654f9728
+ ---> bee07690534b
 Step 14/15 : EXPOSE 8080
- ---> Running in ba982034bdf6
-Removing intermediate container ba982034bdf6
- ---> 040e34bdd4f9
+ ---> Running in c44cedb63ff4
+Removing intermediate container c44cedb63ff4
+ ---> f9e59373f869
 Step 15/15 : CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
- ---> Running in 53d8717afa83
-Removing intermediate container 53d8717afa83
- ---> 73fa6f1ae07e
-Successfully built 73fa6f1ae07e
+ ---> Running in 9215c98cd063
+Removing intermediate container 9215c98cd063
+ ---> dc1f21abb02f
+Successfully built dc1f21abb02f
 Successfully tagged us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo/mc-social-hub-image:latest
 PUSH
 Pushing us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo/mc-social-hub-image
 The push refers to repository [us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo/mc-social-hub-image]
-5c0e26f8d794: Preparing
-5a5ff848e01b: Preparing
-4ec1dbfb2e02: Preparing
-d3a075a84c6d: Preparing
-f714203f5da3: Preparing
-7146eac63a38: Preparing
+a44c113b0d80: Preparing
+0d9857ef102d: Preparing
+7a9b0b658a7e: Preparing
+05711fb552e7: Preparing
+788914b1358f: Preparing
+4c5b0f207575: Preparing
 602c1c97924f: Preparing
 644f9c869502: Preparing
 d3ed01caa084: Preparing
 77a2b55fbe8b: Preparing
-d3ed01caa084: Layer already exists
 602c1c97924f: Layer already exists
 644f9c869502: Layer already exists
-5c0e26f8d794: Pushed
-7146eac63a38: Pushed
-d3a075a84c6d: Pushed
-5a5ff848e01b: Pushed
+d3ed01caa084: Layer already exists
+a44c113b0d80: Pushed
+05711fb552e7: Pushed
+0d9857ef102d: Pushed
+4c5b0f207575: Pushed
+7a9b0b658a7e: Pushed
 77a2b55fbe8b: Pushed
-4ec1dbfb2e02: Pushed
-f714203f5da3: Pushed
-latest: digest: sha256:ed8373348fa335107c92087938f66c7a2d6b0bb704d5b6ee22510fe56369f5e5 size: 2418
+788914b1358f: Pushed
+latest: digest: sha256:94257ac3b237cbd00c50f9b5376b300a21fc95302e4f8fa4bd7bf76002828258 size: 2418
 DONE
 ---------------------------------------------------------------------------------------------
 ID                                    CREATE_TIME                DURATION  SOURCE                                                                                            IMAGES                                                                                      STATUS
-a4a71fcc-1242-4b71-a853-57e18eb0ae13  2025-12-11T06:27:58+00:00  1M18S     gs://gen-media-veo-test_cloudbuild/source/1765434474.378174-4f156fb8e9254e7595d8a8e37df5d7af.tgz  us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo/mc-social-hub-image (+1 more)  SUCCESS
+15a2be88-8e47-4665-aa30-a58d8a361def  2025-12-11T06:52:29+00:00  1M58S     gs://gen-media-veo-test_cloudbuild/source/1765435945.956075-ec3fe84a399f4972bf2eb537b9fd9639.tgz  us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo/mc-social-hub-image (+1 more)  SUCCESS
 [1;33mDeploying to Cloud Run...[0m
 Deploying container to Cloud Run service [[1mmc-social-hub[m] in project [[1mgen-media-veo-test[m] region [[1mus-central1[m]
 Deploying...
 Setting IAM Policy............................done
-Creating Revision.................................................................................................................................................................done
+Creating Revision............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done
 Routing traffic.....done
 Done.
-Service [[1mmc-social-hub[m] revision [[1mmc-social-hub-00020-jzz[m] has been deployed and is serving [1m100[m percent of traffic.
+Service [[1mmc-social-hub[m] revision [[1mmc-social-hub-00021-wlw[m] has been deployed and is serving [1m100[m percent of traffic.
 Service URL: [1mhttps://mc-social-hub-961699257299.us-central1.run.app[m
 [0;32mDeployment Complete![0m
 Your Service URL is displayed above.

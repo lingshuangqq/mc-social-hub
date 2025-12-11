@@ -100,6 +100,14 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
   const { user, stats, is_following } = data
   const isMe = currentUser?.id === user.id
 
+  const getThumbnailUrl = (url: string) => {
+      if (!url) return '';
+      if (url.endsWith('.webp')) {
+          return url.replace('.webp', '_thumb.webp');
+      }
+      return url;
+  }
+
   return (
     <div className="h-full flex flex-col bg-white animate-in slide-in-from-right duration-300">
        {/* Banner Area */}
@@ -187,7 +195,15 @@ const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
                             className="aspect-[3/4] bg-white relative cursor-pointer"
                        >
                            {post.images && post.images.length > 0 ? (
-                               <img src={post.images[0]} className="w-full h-full object-cover" />
+                               <img 
+                                    src={getThumbnailUrl(post.images[0])} 
+                                    className="w-full h-full object-cover" 
+                                    onError={(e) => {
+                                        if (e.currentTarget.src.includes('_thumb')) {
+                                            e.currentTarget.src = post.images[0]
+                                        }
+                                    }}
+                               />
                            ) : (
                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs">Text</div>
                            )}

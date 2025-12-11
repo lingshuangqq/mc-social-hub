@@ -536,102 +536,73 @@ async def google_auth(request: GoogleAuthRequest, db: AsyncSession = Depends(get
         raise HTTPException(status_code=401, detail="Invalid Token")
 
 from google.cloud import storage
-
 from fastapi.responses import FileResponse
-
-
+from PIL import Image, ImageOps
+import io
 
 # ... (existing imports)
 
-
-
 # Configure GCS
-
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 
-
-
-# ... (existing code)
-
-
+# Helper for saving bytes
+def save_image_bytes(data: bytes, filename: str, content_type: str):
+    if GCS_BUCKET_NAME:
+        try:
+            storage_client = storage.Client()
+            bucket = storage_client.bucket(GCS_BUCKET_NAME)
+            blob = bucket.blob(filename)
+            blob.upload_from_string(data, content_type=content_type)
+            return f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{filename}"
+        except Exception as e:
+            print(f"GCS Upload Error: {e}")
+            raise HTTPException(500, "File upload failed")
+    else:
+        file_path = f"static/uploads/{filename}"
+        with open(file_path, "wb") as buffer:
+            buffer.write(data)
+        return f"http://localhost:8000/{file_path}"
 
 @app.post("/api/upload")
-
-
-
 async def upload_file(file: UploadFile = File(...)):
-
-
-
-    file_ext = file.filename.split(".")[-1]
-
-
-
-    filename = f"{uuid.uuid4()}.{file_ext}"
-
-
-
-    
-
-
-
-    if GCS_BUCKET_NAME:
-
-
-
-        try:
-
-
-
-            storage_client = storage.Client()
-
-
-
-            bucket = storage_client.bucket(GCS_BUCKET_NAME)
-
-
-
-            blob = bucket.blob(filename)
-
-
-
-            blob.upload_from_file(file.file, content_type=file.content_type)
-
-
-
-            return {"url": f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{filename}"}
-
-
-
-        except Exception as e:
-
-
-
-            print(f"GCS Upload Error: {e}")
-
-
-
-            raise HTTPException(500, "File upload failed")
-
-
-
-    else:
-
-
-
-        file_path = f"static/uploads/{filename}"
-
-
-
-        with open(file_path, "wb") as buffer:
-
-
-
-            shutil.copyfileobj(file.file, buffer)
-
-
-
-        return {"url": f"http://localhost:8000/{file_path}"}
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        
+        # Fix orientation
+        image = ImageOps.exif_transpose(image)
+        
+        file_id = str(uuid.uuid4())
+        
+        # 1. Process Original (Max 1920px, WebP, Q85)
+        orig_img = image.copy()
+        if orig_img.width > 1920:
+            ratio = 1920 / orig_img.width
+            new_height = int(orig_img.height * ratio)
+            orig_img = orig_img.resize((1920, new_height), Image.Resampling.LANCZOS)
+            
+        orig_bytes = io.BytesIO()
+        # Convert to RGB if RGBA (WebP supports RGBA but JPEG doesn't, sticking to WebP is safe)
+        # But if we wanted to support JPEG fallback... WebP is fine for modern browsers.
+        orig_img.save(orig_bytes, format="WEBP", quality=85)
+        orig_url = save_image_bytes(orig_bytes.getvalue(), f"{file_id}.webp", "image/webp")
+        
+        # 2. Process Thumbnail (Max 480px, WebP, Q70)
+        thumb_img = image.copy()
+        if thumb_img.width > 480:
+            ratio = 480 / thumb_img.width
+            new_height = int(thumb_img.height * ratio)
+            thumb_img = thumb_img.resize((480, new_height), Image.Resampling.LANCZOS)
+            
+        thumb_bytes = io.BytesIO()
+        thumb_img.save(thumb_bytes, format="WEBP", quality=70)
+        save_image_bytes(thumb_bytes.getvalue(), f"{file_id}_thumb.webp", "image/webp")
+        
+        return {"url": orig_url}
+        
+    except Exception as e:
+        print(f"Image processing failed: {e}")
+        raise HTTPException(500, "Invalid image file")
 
 
 
