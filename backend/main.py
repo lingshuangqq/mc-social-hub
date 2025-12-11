@@ -114,6 +114,8 @@ import sys
 
 # ... (existing code)
 
+from sqlalchemy import inspect, text
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -122,6 +124,25 @@ async def lifespan(app: FastAPI):
             print("DEBUG: Connecting to DB for Schema Creation...")
             await conn.run_sync(Base.metadata.create_all)
             print("DEBUG: Schema Created Successfully.")
+            
+            # --- Manual Migration for Schema Updates (Phase 5+) ---
+            # Check if 'ai_keywords' exists in 'posts' table
+            def check_ai_keywords_column(connection):
+                inspector = inspect(connection)
+                # Check if table exists first
+                if 'posts' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('posts')]
+                    return 'ai_keywords' not in columns
+                return False
+
+            needs_migration = await conn.run_sync(check_ai_keywords_column)
+            
+            if needs_migration:
+                print("DEBUG: MIGRATION - Adding 'ai_keywords' column to 'posts' table...")
+                await conn.execute(text("ALTER TABLE posts ADD COLUMN ai_keywords TEXT"))
+                print("DEBUG: MIGRATION - 'ai_keywords' column added successfully.")
+            # ------------------------------------------------------
+            
         os.makedirs("static/uploads", exist_ok=True)
         yield
     except Exception as e:
