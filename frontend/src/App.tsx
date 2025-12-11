@@ -256,6 +256,10 @@ function App() {
                 user={user}
                 onAddClick={() => setIsCreating(true)}
                 unreadCount={unreadCount}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSearchSubmit={handleSearch}
+                onUserClick={setPublicProfileId}
             >
                 {renderContent()}
             </DesktopLayout>

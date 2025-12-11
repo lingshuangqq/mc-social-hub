@@ -1,4 +1,5 @@
 import { Heart, Star } from 'lucide-react'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 interface Post {
     id: number
@@ -7,7 +8,7 @@ interface Post {
     images: string[]
     likes: number
     collections: number
-    author: { name: string, avatar_url: string }
+    author: { id: number, name: string, avatar_url: string }
 }
 
 interface Props {
@@ -17,12 +18,24 @@ interface Props {
 }
 
 const MasonryGrid = ({ posts, onPostClick, onUserClick }: Props) => {
-    const leftPosts = posts.filter((_, i) => i % 2 === 0)
-    const rightPosts = posts.filter((_, i) => i % 2 !== 0)
+    // Breakpoints
+    const isMd = useMediaQuery('(min-width: 768px)')
+    const isXl = useMediaQuery('(min-width: 1280px)')
+
+    // Determine column count
+    let columnCount = 2
+    if (isXl) columnCount = 4
+    else if (isMd) columnCount = 3
+
+    // Distribute posts into columns
+    const columns: Post[][] = Array.from({ length: columnCount }, () => [])
+    posts.forEach((post, i) => {
+        columns[i % columnCount].push(post)
+    })
 
     const PostCard = ({ post }: { post: Post }) => (
         <div 
-            className="bg-white rounded-xl overflow-hidden shadow-sm mb-2 break-inside-avoid relative"
+            className="bg-white rounded-xl overflow-hidden shadow-sm mb-3 break-inside-avoid relative hover:shadow-md transition-shadow duration-200"
         >
             <div onClick={() => onPostClick(post.id)} className="cursor-pointer w-full relative">
                 {post.images && post.images.length > 0 ? (
@@ -32,16 +45,16 @@ const MasonryGrid = ({ posts, onPostClick, onUserClick }: Props) => {
                 )}
             </div>
 
-            <div className="p-2.5">
+            <div className="p-3">
                 <div onClick={() => onPostClick(post.id)} className="cursor-pointer">
                     {post.title && (
-                        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 leading-snug">
+                        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1.5 leading-snug">
                             {post.title}
                         </h3>
                     )}
                     
                     {post.content && (
-                        <p className={`text-xs text-gray-600 mb-2 ${post.title ? 'line-clamp-1' : 'line-clamp-3'}`}>
+                        <p className={`text-xs text-gray-600 mb-2.5 ${post.title ? 'line-clamp-1' : 'line-clamp-3'}`}>
                             {post.content}
                         </p>
                     )}
@@ -49,29 +62,24 @@ const MasonryGrid = ({ posts, onPostClick, onUserClick }: Props) => {
 
                 <div className="flex items-center justify-between mt-1">
                     <div 
-                        className="flex items-center gap-1.5 overflow-hidden flex-1 mr-2 cursor-pointer hover:opacity-80"
+                        className="flex items-center gap-2 overflow-hidden flex-1 mr-2 cursor-pointer hover:opacity-80"
                         onClick={(e) => {
                             e.stopPropagation()
-                            // Assuming post.author has an ID (it should, but type def above needs checking)
-                            // The generic Post interface in MasonryGrid might need author.id
                             if (onUserClick && post.author) {
-                                // We need to cast or ensure author has ID. The Feed API returns it.
-                                // Let's blindly trust it has it or pass it.
-                                // Actually, let's update the Post interface above first.
-                                onUserClick((post.author as any).id) 
+                                onUserClick(post.author.id) 
                             }
                         }}
                     >
-                        <img src={post.author?.avatar_url} className="w-4 h-4 rounded-full bg-gray-200 shrink-0 object-cover" />
-                        <span className="text-[10px] text-gray-500 truncate">{post.author?.name}</span>
+                        <img src={post.author?.avatar_url} className="w-5 h-5 rounded-full bg-gray-200 shrink-0 object-cover border border-gray-100" />
+                        <span className="text-[11px] text-gray-500 truncate font-medium">{post.author?.name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-400 shrink-0">
-                        <div className="flex items-center gap-0.5">
-                            <Heart className="w-3 h-3" />
+                        <div className="flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-medium">{post.likes || 0}</span>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                            <Star className="w-3 h-3" />
+                        <div className="flex items-center gap-1">
+                            <Star className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-medium">{post.collections || 0}</span>
                         </div>
                     </div>
@@ -81,13 +89,12 @@ const MasonryGrid = ({ posts, onPostClick, onUserClick }: Props) => {
     )
 
     return (
-        <div className="flex gap-2 items-start">
-            <div className="flex-1 flex flex-col w-1/2">
-                {leftPosts.map(post => <PostCard key={post.id} post={post} />)}
-            </div>
-            <div className="flex-1 flex flex-col w-1/2">
-                {rightPosts.map(post => <PostCard key={post.id} post={post} />)}
-            </div>
+        <div className="flex gap-3 items-start">
+            {columns.map((colPosts, colIndex) => (
+                <div key={colIndex} className="flex-1 flex flex-col min-w-0">
+                    {colPosts.map(post => <PostCard key={post.id} post={post} />)}
+                </div>
+            ))}
         </div>
     )
 }

@@ -1266,6 +1266,41 @@ async def get_user_posts(user_id: int, db: AsyncSession = Depends(get_db)):
 
 
 
+@app.get("/api/discovery/trending-tags")
+async def get_trending_tags():
+    """
+    Returns a list of trending tags. 
+    Currently static, but can be enhanced to aggregate from recent posts.
+    """
+    return [
+        {"tag": "Life", "count": 120},
+        {"tag": "Work", "count": 85},
+        {"tag": "Food", "count": 64},
+        {"tag": "Event", "count": 42},
+        {"tag": "Design", "count": 30}
+    ]
+
+@app.get("/api/discovery/suggested-users")
+async def get_suggested_users(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Returns a list of users to follow (excluding self and already followed).
+    """
+    # Subquery: IDs already followed
+    subquery = select(UserFollow.followed_id).where(UserFollow.follower_id == user.id)
+    
+    # Query: Users NOT IN subquery AND != self
+    query = (
+        select(User)
+        .where(User.id != user.id)
+        .where(User.id.not_in(subquery))
+        .order_by(func.random()) # SQLite/Postgres compatible for random
+        .limit(5)
+    )
+    
+    result = await db.execute(query)
+    users = result.scalars().all()
+    return users
+
 # --- Notification Logic ---
 
 

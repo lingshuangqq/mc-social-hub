@@ -63,10 +63,10 @@
   - [x] Fix Desktop navigation issue (auto-close overlays on tab switch).
 - [x] **Task 6.2: Desktop Modals**
   - [x] Update `CreatePostModal` to be a centered dialog on desktop.
-  - [x] Update `PostDetailModal` to be a centered dialog on desktop (max-width 480px).
-- [ ] **Task 6.3: Adaptive Masonry Grid**
-  - Update `MasonryGrid` to support 3 or 4 columns on large screens (currently fixed at 2).
-- [ ] **Task 6.4: Right Sidebar Widgets**
-  - Implement real data for "Trending Tags".
-  - Implement real data for "Who to Follow".
-  - Add Search functionality integration.
+  - [x] Update `PostDetailModal` to be a split-screen dialog (Left Media, Right Info) on desktop, matching Xiaohongshu style.
+- [x] **Task 6.3: Adaptive Masonry Grid**
+  - [x] Update `MasonryGrid` to support dynamic column count (2/3/4) based on screen width.
+  - [x] Widen main content area in `DesktopLayout` to `max-w-4xl`.
+- [x] **Task 6.4: Right Sidebar Widgets**
+  - [x] Backend: Implement `/api/discovery/trending-tags` and `/api/discovery/suggested-users`.
+  - [x] Frontend: Implement `RightSidebar` with real data fetching, Search integration, and Follow functionality.

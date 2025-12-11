@@ -77,3 +77,21 @@
 - **Colors:** MC Navy (#002A54) & MC Orange (#F58220).
 - **Typography:** Inter/System Stack.
 - **Interaction:** Optimistic UI for all toggle actions (Like/Collect).
+
+## 11. Responsive Design Specification (Phase 6)
+
+### 11.1 Breakpoints
+- **Mobile (< 768px)**: Single column, bottom navigation, full-screen modals.
+- **Tablet (768px - 1024px)**: 3-column masonry grid, side navigation.
+- **Desktop (>= 1024px)**: 
+  - **Layout**: 3-Column (SideNav 256px | Main Content max 896px | Right Sidebar 320px).
+  - **Masonry Grid**: 4 columns.
+
+### 11.2 Component Adaptation
+| Component | Mobile Behavior | Desktop Behavior |
+| :--- | :--- | :--- |
+| **Navigation** | Fixed Bottom Bar | Fixed Left Sidebar |
+| **Post Feed** | 2-Column Masonry | 3 or 4-Column Masonry |
+| **Post Detail** | Full-screen Page | **Split-Screen Dialog** (Left: Media, Right: Info) |
+| **Create Post** | Full-screen Page | Centered Dialog (Fixed Size) |
+| **Right Sidebar**| Hidden | Visible (Search, Trending, Suggestions) |
