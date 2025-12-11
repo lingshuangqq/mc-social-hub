@@ -11,7 +11,7 @@ interface Props {
 
 const BottomNav = ({ activeTab, setActiveTab, onAddClick, unreadCount }: Props) => {
     return (
-       <nav className="bg-white border-t border-gray-100 pb-safe pt-2 px-1 flex justify-between items-end h-14 shrink-0 z-20">
+       <nav className="bg-white border-t border-gray-100 pb-safe pt-2 px-1 flex justify-between items-end shrink-0 z-20">
            <button 
                 onClick={() => setActiveTab('feed')}
                 className={`flex-1 flex flex-col items-center gap-1 pb-1 ${activeTab === 'feed' ? 'text-mc-navy' : 'text-gray-400'}`}

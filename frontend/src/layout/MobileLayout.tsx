@@ -30,7 +30,7 @@ export default function MobileLayout({
     showHeader = true
 }: MobileLayoutProps) {
     return (
-        <div className="h-screen bg-gray-50 flex flex-col">
+        <div className="h-[100dvh] bg-gray-50 flex flex-col supports-[height:100dvh]:h-[100dvh] h-screen">
             {showHeader && (
                 <header className="bg-white px-4 py-3 flex items-center sticky top-0 z-10 border-b border-gray-100 gap-3">
                     <div className="flex-1 relative">
