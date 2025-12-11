@@ -25,7 +25,7 @@ interface Post {
     images: string[]
     likes: number
     collections: number
-    author: { name: string, avatar_url: string }
+    author: { id: number, name: string, avatar_url: string }
 }
 
 const PAGE_SIZE = 10;

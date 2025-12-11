@@ -39,7 +39,6 @@ interface Props {
 const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
   const [data, setData] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(false)
   const { token, user: currentUser } = useAuthStore()
 
   useEffect(() => {

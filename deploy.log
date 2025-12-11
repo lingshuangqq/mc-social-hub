@@ -1,0 +1,129 @@
+[0;32mStarting Deployment for mc-social-hub...[0m
+Updated property [core/project].
+[1;33mChecking Cloud SQL Instance...[0m
+Connection Name: gen-media-veo-test:us-central1:mc-social-db-instance
+Checking Database...
+Database mc_social_db exists.
+[1;33mChecking GCS Bucket...[0m
+Bucket mc-social-assets-gen-media-veo-test exists.
+[1;33mBuilding Docker Image...[0m
+createTime: '2025-12-05T04:00:45.175005Z'
+description: MC Social Hub Repo
+format: DOCKER
+mode: STANDARD_REPOSITORY
+name: projects/gen-media-veo-test/locations/us-central1/repositories/mc-social-repo
+registryUri: us-central1-docker.pkg.dev/gen-media-veo-test/mc-social-repo
+satisfiesPzi: true
+updateTime: '2025-12-05T08:41:00.317506Z'
+vulnerabilityScanningConfig:
+  enablementState: SCANNING_DISABLED
+  enablementStateReason: API containerscanning.googleapis.com is not enabled.
+  lastEnableTime: '2025-12-05T04:00:44.572231038Z'
+Creating temporary archive of 71 file(s) totalling 1.4 MiB before compression.
+Some files were not included in the source upload.
+
+Check the gcloud log [/Users/amylu/.config/gcloud/logs/2025.12.11/11.04.44.439072.log] to see which files and the contents of the
+default gcloudignore file used (see `$ gcloud topic gcloudignore` to learn
+more).
+
+Uploading tarball of [.] to [gs://gen-media-veo-test_cloudbuild/source/1765422284.656082-c2ea16d859cd4658ab457d1a40a60186.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/gen-media-veo-test/locations/global/builds/374a88b9-039e-41a5-86b4-a3df2fb4412b].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/374a88b9-039e-41a5-86b4-a3df2fb4412b?project=961699257299 ].
+Waiting for build to complete. Polling interval: 1 second(s).
+
+BUILD FAILURE: Build step failure: build step 0 "gcr.io/cloud-builders/docker" failed: step exited with non-zero status: 2
+ERROR: (gcloud.builds.submit) build 374a88b9-039e-41a5-86b4-a3df2fb4412b completed with status "FAILURE"
+------------------------------------ REMOTE BUILD OUTPUT ------------------------------------
+starting build "374a88b9-039e-41a5-86b4-a3df2fb4412b"
+
+FETCHSOURCE
+Fetching storage object: gs://gen-media-veo-test_cloudbuild/source/1765422284.656082-c2ea16d859cd4658ab457d1a40a60186.tgz#1765422288191117
+Copying gs://gen-media-veo-test_cloudbuild/source/1765422284.656082-c2ea16d859cd4658ab457d1a40a60186.tgz#1765422288191117...
+/ [0 files][    0.0 B/  1.1 MiB]                                                / [1 files][  1.1 MiB/  1.1 MiB]                                                
+Operation completed over 1 objects/1.1 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  1.546MB
+Step 1/15 : FROM node:18-alpine as frontend-build
+18-alpine: Pulling from library/node
+f18232174bc9: Pulling fs layer
+dd71dde834b5: Pulling fs layer
+1e5a4c89cee5: Pulling fs layer
+25ff2da83641: Pulling fs layer
+1e5a4c89cee5: Verifying Checksum
+1e5a4c89cee5: Download complete
+25ff2da83641: Verifying Checksum
+25ff2da83641: Download complete
+f18232174bc9: Verifying Checksum
+f18232174bc9: Download complete
+dd71dde834b5: Verifying Checksum
+dd71dde834b5: Download complete
+f18232174bc9: Pull complete
+dd71dde834b5: Pull complete
+1e5a4c89cee5: Pull complete
+25ff2da83641: Pull complete
+Digest: sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+Status: Downloaded newer image for node:18-alpine
+ ---> ee77c6cd7c18
+Step 2/15 : WORKDIR /app/frontend
+ ---> Running in 99d744765560
+Removing intermediate container 99d744765560
+ ---> 0494b622e109
+Step 3/15 : COPY frontend/package*.json ./
+ ---> 773b100f368b
+Step 4/15 : RUN npm install
+ ---> Running in 16d3e4912bb0
+
+added 181 packages, and audited 182 packages in 11s
+
+32 packages are looking for funding
+  run `npm fund` for details
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[91mnpm notice
+npm notice New major version of npm available! 10.8.2 -> 11.7.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+npm notice To update run: npm install -g npm@11.7.0
+npm notice
+[0mRemoving intermediate container 16d3e4912bb0
+ ---> bd7812b64464
+Step 5/15 : COPY frontend/ ./
+ ---> 2dfe0682f814
+Step 6/15 : RUN npm run build
+ ---> Running in 5fc11c9f2f8d
+
+> mc-social-hub-frontend@0.0.0 build
+> tsc && vite build
+src/App.tsx(205,41): error TS2719: Type 'Post[]' is not assignable to type 'Post[]'. Two different types with this name exist, but they are unrelated.
+  Type 'Post' is not assignable to type 'Post'. Two different types with this name exist, but they are unrelated.
+    Types of property 'author' are incompatible.
+      Property 'id' is missing in type '{ name: string; avatar_url: string; }' but required in type '{ id: number; name: string; avatar_url: string; }'.
+src/components/SideNav.tsx(1,59): error TS6133: 'LogOut' is declared but its value is never read.
+src/views/ExploreView.tsx(16,5): error TS6133: 'LayoutGrid' is declared but its value is never read.
+src/views/ExploreView.tsx(32,7): error TS6133: 'CATEGORIES' is declared but its value is never read.
+src/views/ExploreView.tsx(133,38): error TS2719: Type 'Post[]' is not assignable to type 'Post[]'. Two different types with this name exist, but they are unrelated.
+  Type 'Post' is not assignable to type 'Post'. Two different types with this name exist, but they are unrelated.
+    Types of property 'author' are incompatible.
+      Property 'id' is missing in type '{ name: string; avatar_url: string; }' but required in type '{ id: number; name: string; avatar_url: string; }'.
+src/views/PublicProfileView.tsx(42,10): error TS6133: 'loading' is declared but its value is never read.
+src/views/PublicProfileView.tsx(42,19): error TS6133: 'setLoading' is declared but its value is never read.
+The command '/bin/sh -c npm run build' returned a non-zero code: 2
+ERROR
+ERROR: build step 0 "gcr.io/cloud-builders/docker" failed: step exited with non-zero status: 2
+---------------------------------------------------------------------------------------------
+[1;33mDeploying to Cloud Run...[0m
+Deploying container to Cloud Run service [[1mmc-social-hub[m] in project [[1mgen-media-veo-test[m] region [[1mus-central1[m]
+Deploying...
+Setting IAM Policy....................done
+Creating Revision..................................................................................................................................................................................................................................................................................................................done
+Routing traffic.....done
+Done.
+Service [[1mmc-social-hub[m] revision [[1mmc-social-hub-00014-jpv[m] has been deployed and is serving [1m100[m percent of traffic.
+Service URL: [1mhttps://mc-social-hub-961699257299.us-central1.run.app[m
+[0;32mDeployment Complete![0m
+Your Service URL is displayed above.
