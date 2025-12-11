@@ -891,11 +891,7 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
-    collection_count_res = await db.execute(select(func.count()).select_from(PostCollection).where(PostCollection.post_id == post_id))
-
-
-
-    collection_count = collection_count_res.scalar()
+        collection_count_res = await db.execute(select(func.count()).select_from(PostCollection).where(PostCollection.post_id == post_id))
 
 
 
@@ -903,31 +899,111 @@ async def get_post_detail(post_id: int, user: User = Depends(get_current_user), 
 
 
 
-    return {
+        collection_count = collection_count_res.scalar()
 
 
 
-        "post": post,
 
 
 
-        "is_liked": is_liked,
+
+    
 
 
 
-        "is_collected": is_collected,
 
 
 
-        "like_count": like_count,
+
+        # Check is_following author
 
 
 
-        "collection_count": collection_count
 
 
 
-    }
+
+        follow_res = await db.execute(select(UserFollow).where(UserFollow.follower_id == user.id, UserFollow.followed_id == post.user_id))
+
+
+
+
+
+
+
+        is_following = follow_res.scalars().first() is not None
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+        return {
+
+
+
+
+
+
+
+            "post": post,
+
+
+
+
+
+
+
+            "is_liked": is_liked,
+
+
+
+
+
+
+
+            "is_collected": is_collected,
+
+
+
+
+
+
+
+            "like_count": like_count,
+
+
+
+
+
+
+
+            "collection_count": collection_count,
+
+
+
+
+
+
+
+            "is_following": is_following
+
+
+
+
+
+
+
+        }
 
 
 
