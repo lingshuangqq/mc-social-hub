@@ -1,73 +1,78 @@
-# 📱 MC Social Hub 使用指南
+# 📱 MC Social Hub
 
-欢迎来到 MC Social Hub！这是一个专为 Master Concept 大家庭打造的分享社区。在这里，你可以分享工作趣事、生活点滴，或者发现同事们的精彩瞬间。
+Welcome to **MC Social Hub**! A dedicated social sharing community for the Master Concept family.
 
-> **⚠️ 重要提示 (必读)**
-> 1.  **网络环境**：本应用基于 Google 服务构建，**必须连接 VPN (翻墙)** 才能访问和登录。
-> 2.  **账号登录**：请使用您的 **Google 企业账号** (Master Concept 邮箱) 直接登录，无需注册。
-
----
-
-## 🌟 手机端使用 (推荐)
-
-如果你拥有 iPhone 或安装了 Google 服务的 Android 手机，这是最佳体验方式。
-
-1.  **访问链接**: 在浏览器中打开 `https://mc-social-hub-961699257299.us-central1.run.app/`
-2.  **添加到主屏幕** (可选):
-    *   **iPhone (Safari)**: 点击底部中间的分享按钮 -> 选择 "添加到主屏幕"。
-    *   **Android (Chrome)**: 点击右上角三个点 -> 选择 "安装应用" 或 "添加到主屏幕"。
-    *   这样它就会像原生 APP 一样全屏运行，体验更丝滑！
+> **⚠️ Important**
+> 1.  **Network**: VPN required to access Google services.
+> 2.  **Login**: Use your Master Concept Google Workspace account directly.
 
 ---
 
-## 💻 电脑端使用指南 (保姆级教程)
+## 🌟 Key Features (v2.0)
 
-因为本应用是 **"Mobile First" (手机优先)** 设计，直接在电脑浏览器打开可能会导致排版过宽。如果你主要用电脑，或者手机无法登录 Google (如华为手机)，请按照以下步骤操作，获得完美的 **"手机模拟体验"**。
-
-### 第一步：准备工作
-*   请务必使用 **Google Chrome 浏览器**。
-*   确保你的 VPN 已开启。
-
-### 第二步：开启 "手机模式" (关键!)
-直接打开网页可能会觉得字太小或图片太大。别担心，我们可以让 Chrome 变身手机！
-
-1.  **打开开发者工具**:
-    *   在网页空白处点击 **鼠标右键**，选择菜单最底部的 **"检查" (Inspect)**。
-    *   或者直接按快捷键 `F12` (Windows) / `Option + Command + I` (Mac)。
-
-2.  **切换设备视图**:
-    *   找到开发者工具左上角的 **"手机/平板图标"** (Toggle device toolbar)，点击它！(或者按 `Ctrl + Shift + M`)。
-    *   此时网页中间会变成一个手机形状的窗口。
-
-3.  **选择机型**:
-    *   在顶部菜单栏选择一个机型，推荐选择 **"iPhone 12 Pro"** 或 **"iPhone SE"**，尺寸最合适。
-    *   如果觉得太小，可以将缩放比例 (Zoom) 设置为 `100%`。
-
-4.  **刷新页面**:
-    *   **非常重要！** 切换完模式后，请按 `F5` 或点击浏览器刷新按钮。这样页面才能正确加载手机端的排版样式。
-
-### 第三步：交互操作
-在手机模式下，你的鼠标就是手指：
-*   **点击**: 相当于手指轻触。
-*   **按住拖动**: 相当于手指滑动屏幕。
-*   **保存图片**: 如果想保存图片，请在图片上 **右键** (不要长按)，选择 "在新标签页中打开图片" 或 "保存图片"。
+We've just released a major update (Phase 6):
+*   **💻 Desktop Adaptation**: Full responsive support with 3-column layout and split-screen details.
+*   **🚀 Image Optimization**: Automatic WebP compression and thumbnail generation for fast loading.
+*   **🏷️ Smart Tags**: 9 official categories (Life, Work, Event...) with AI auto-tagging.
 
 ---
 
-## 🛠️ 常见问题 (FAQ)
+## 📱 Mobile Experience
 
-**Q: 我点击 "Login with Google" 没反应？**
-A: 请检查 VPN 是否开启。如果还是不行，尝试刷新页面或清除浏览器缓存。
+**URL**: `https://mc-social-hub-961699257299.us-central1.run.app/`
 
-**Q: 为什么上传图片失败 (500 Error)？**
-A: 请确保上传的是常见的图片格式 (JPG/PNG)，且文件大小不要过大 (建议 < 5MB)。
-
-**Q: 为什么我的界面看起来乱乱的？**
-A: 请确认是否按照上述指南开启了 Chrome 的 "手机模式"，并**刷新了页面**。
-
-**Q: 华为手机怎么用？**
-A: 由于众所周知的 Google 服务限制，华为手机可能无法直接唤起 Google 登录。建议使用电脑版 Chrome 按照上述指南操作。
+**Install as PWA**:
+*   **iPhone (Safari)**: Share -> "Add to Home Screen".
+*   **Android (Chrome)**: Menu -> "Install App".
+Full-screen immersive experience, optimized for iOS safe areas.
 
 ---
 
-**祝大家玩得开心！🎉**
+## 💻 Desktop Experience
+
+Open in Chrome/Edge for a professional desktop view:
+
+### 1. 3-Column Layout
+*   **Left**: Navigation (Home, Explore, Profile).
+*   **Center**: Adaptive Masonry Grid (3-4 columns).
+*   **Right**: Widgets (Trending Tags, Who to Follow).
+
+### 2. Split-Screen Detail
+Click any post to view in a split-screen modal:
+*   **Left**: Large media viewer.
+*   **Right**: Info, comments, and interactions.
+
+---
+
+## 🏷️ Categories
+
+Find content in "Explore":
+*   ☕ **Life**
+*   💼 **Work**
+*   📅 **Event**
+*   🍽️ **Food**
+*   🛍️ **Market**
+*   🎁 **Welfare**
+*   ...and more!
+
+---
+
+## 🛠️ Development
+
+### Tech Stack
+*   **Frontend**: React, Vite, TypeScript, Tailwind CSS.
+*   **Backend**: FastAPI, Python 3.12, SQLAlchemy (Async).
+*   **Database**: Cloud SQL (PostgreSQL).
+*   **Storage**: Google Cloud Storage (GCS).
+*   **AI**: Google Vertex AI (Gemini 1.5 Pro).
+
+### Deployment
+Managed via `deploy.sh` to Google Cloud Run.
+
+```bash
+./deploy.sh
+```
+
+---
+
+**Master Concept - Connecting People & Ideas**
