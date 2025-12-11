@@ -1,4 +1,4 @@
-import { Home, Compass, Bell, User, PlusCircle, Settings, LogOut } from 'lucide-react'
+import { Home, Compass, Bell, User, PlusCircle, Settings } from 'lucide-react'
 
 interface SideNavProps {
     activeTab: string

@@ -13,7 +13,6 @@ import {
     Activity, 
     MessageCircle, 
     HelpCircle,
-    LayoutGrid,
     Truck,
     Sparkles
 } from 'lucide-react'

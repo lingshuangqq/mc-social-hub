@@ -22,23 +22,23 @@ vulnerabilityScanningConfig:
 Creating temporary archive of 71 file(s) totalling 1.4 MiB before compression.
 Some files were not included in the source upload.
 
-Check the gcloud log [/Users/amylu/.config/gcloud/logs/2025.12.11/11.07.28.905901.log] to see which files and the contents of the
+Check the gcloud log [/Users/amylu/.config/gcloud/logs/2025.12.11/11.09.51.929177.log] to see which files and the contents of the
 default gcloudignore file used (see `$ gcloud topic gcloudignore` to learn
 more).
 
-Uploading tarball of [.] to [gs://gen-media-veo-test_cloudbuild/source/1765422449.090172-aff71295d1c3469d930dfb399e25d577.tgz]
-Created [https://cloudbuild.googleapis.com/v1/projects/gen-media-veo-test/locations/global/builds/ffcc487a-0e91-4417-b342-5ddc855861d1].
-Logs are available at [ https://console.cloud.google.com/cloud-build/builds/ffcc487a-0e91-4417-b342-5ddc855861d1?project=961699257299 ].
+Uploading tarball of [.] to [gs://gen-media-veo-test_cloudbuild/source/1765422592.134521-28dcdada69a44eaabb8961a016627516.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/gen-media-veo-test/locations/global/builds/1240b240-ee6f-4abc-b214-a4947ed39b6c].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/1240b240-ee6f-4abc-b214-a4947ed39b6c?project=961699257299 ].
 Waiting for build to complete. Polling interval: 1 second(s).
 
 BUILD FAILURE: Build step failure: build step 0 "gcr.io/cloud-builders/docker" failed: step exited with non-zero status: 2
-ERROR: (gcloud.builds.submit) build ffcc487a-0e91-4417-b342-5ddc855861d1 completed with status "FAILURE"
+ERROR: (gcloud.builds.submit) build 1240b240-ee6f-4abc-b214-a4947ed39b6c completed with status "FAILURE"
 ------------------------------------ REMOTE BUILD OUTPUT ------------------------------------
-starting build "ffcc487a-0e91-4417-b342-5ddc855861d1"
+starting build "1240b240-ee6f-4abc-b214-a4947ed39b6c"
 
 FETCHSOURCE
-Fetching storage object: gs://gen-media-veo-test_cloudbuild/source/1765422449.090172-aff71295d1c3469d930dfb399e25d577.tgz#1765422452097975
-Copying gs://gen-media-veo-test_cloudbuild/source/1765422449.090172-aff71295d1c3469d930dfb399e25d577.tgz#1765422452097975...
+Fetching storage object: gs://gen-media-veo-test_cloudbuild/source/1765422592.134521-28dcdada69a44eaabb8961a016627516.tgz#1765422594305524
+Copying gs://gen-media-veo-test_cloudbuild/source/1765422592.134521-28dcdada69a44eaabb8961a016627516.tgz#1765422594305524...
 / [0 files][    0.0 B/  1.1 MiB]                                                / [1 files][  1.1 MiB/  1.1 MiB]                                                
 Operation completed over 1 objects/1.1 MiB.                                      
 BUILD
@@ -66,13 +66,13 @@ Digest: sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
 Status: Downloaded newer image for node:18-alpine
  ---> ee77c6cd7c18
 Step 2/15 : WORKDIR /app/frontend
- ---> Running in 13241b6feedc
-Removing intermediate container 13241b6feedc
- ---> a2664a8a3b7c
+ ---> Running in e50065935050
+Removing intermediate container e50065935050
+ ---> ebd5f95732cc
 Step 3/15 : COPY frontend/package*.json ./
- ---> d21ae4eea322
+ ---> 2b5955d6deca
 Step 4/15 : RUN npm install
- ---> Running in 83cc9b1bc98d
+ ---> Running in aa29d360ecf9
 
 added 181 packages, and audited 182 packages in 6s
 
@@ -90,22 +90,17 @@ npm notice New major version of npm available! 10.8.2 -> 11.7.0
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
 npm notice To update run: npm install -g npm@11.7.0
 npm notice
-[0mRemoving intermediate container 83cc9b1bc98d
- ---> b2aa5787af80
+[0mRemoving intermediate container aa29d360ecf9
+ ---> efe27456ba7a
 Step 5/15 : COPY frontend/ ./
- ---> deb7db56bd3b
+ ---> c5daea3dc986
 Step 6/15 : RUN npm run build
- ---> Running in 3d2255f089c8
+ ---> Running in ada509d0dd5d
 
 > mc-social-hub-frontend@0.0.0 build
 > tsc && vite build
 src/components/SideNav.tsx(1,59): error TS6133: 'LogOut' is declared but its value is never read.
 src/views/ExploreView.tsx(16,5): error TS6133: 'LayoutGrid' is declared but its value is never read.
-src/views/ExploreView.tsx(32,7): error TS6133: 'CATEGORIES' is declared but its value is never read.
-src/views/ExploreView.tsx(133,38): error TS2719: Type 'Post[]' is not assignable to type 'Post[]'. Two different types with this name exist, but they are unrelated.
-  Type 'Post' is not assignable to type 'Post'. Two different types with this name exist, but they are unrelated.
-    Types of property 'author' are incompatible.
-      Property 'id' is missing in type '{ name: string; avatar_url: string; }' but required in type '{ id: number; name: string; avatar_url: string; }'.
 The command '/bin/sh -c npm run build' returned a non-zero code: 2
 ERROR
 ERROR: build step 0 "gcr.io/cloud-builders/docker" failed: step exited with non-zero status: 2
@@ -113,11 +108,11 @@ ERROR: build step 0 "gcr.io/cloud-builders/docker" failed: step exited with non-
 [1;33mDeploying to Cloud Run...[0m
 Deploying container to Cloud Run service [[1mmc-social-hub[m] in project [[1mgen-media-veo-test[m] region [[1mus-central1[m]
 Deploying...
-Setting IAM Policy.........................done
-Creating Revision..........................................................................................................done
+Setting IAM Policy...........................done
+Creating Revision.............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done
 Routing traffic.....done
 Done.
-Service [[1mmc-social-hub[m] revision [[1mmc-social-hub-00015-rdd[m] has been deployed and is serving [1m100[m percent of traffic.
+Service [[1mmc-social-hub[m] revision [[1mmc-social-hub-00016-rsp[m] has been deployed and is serving [1m100[m percent of traffic.
 Service URL: [1mhttps://mc-social-hub-961699257299.us-central1.run.app[m
 [0;32mDeployment Complete![0m
 Your Service URL is displayed above.
