@@ -116,6 +116,8 @@ import sys
 
 from sqlalchemy import inspect, text
 
+import csv
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -123,24 +125,20 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             print("DEBUG: Connecting to DB for Schema Creation...")
             await conn.run_sync(Base.metadata.create_all)
-            print("DEBUG: Schema Created Successfully.")
             
+            # ... (Existing migrations omitted for brevity, keep them)
             # --- Manual Migration for Schema Updates (Phase 5+) ---
             # Check if 'ai_keywords' exists in 'posts' table
             def check_ai_keywords_column(connection):
                 inspector = inspect(connection)
-                # Check if table exists first
                 if 'posts' in inspector.get_table_names():
                     columns = [c['name'] for c in inspector.get_columns('posts')]
                     return 'ai_keywords' not in columns
                 return False
 
             needs_migration = await conn.run_sync(check_ai_keywords_column)
-            
             if needs_migration:
-                print("DEBUG: MIGRATION - Adding 'ai_keywords' column to 'posts' table...")
                 await conn.execute(text("ALTER TABLE posts ADD COLUMN ai_keywords TEXT"))
-                print("DEBUG: MIGRATION - 'ai_keywords' column added successfully.")
             
             # --- Manual Migration for Users Table (Phase 5) ---
             def check_user_columns(connection):
@@ -155,12 +153,37 @@ async def lifespan(app: FastAPI):
                 return []
 
             missing_user_cols = await conn.run_sync(check_user_columns)
-            
             for col in missing_user_cols:
-                print(f"DEBUG: MIGRATION - Adding '{col}' column to 'users' table...")
                 await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))
-                print(f"DEBUG: MIGRATION - '{col}' column added successfully.")
+            
             # ------------------------------------------------------
+            # --- Auto-Sync Allowed Emails from CSV (GitOps) ---
+            # ------------------------------------------------------
+            csv_path = "scripts/template_employees.csv"
+            if os.path.exists(csv_path):
+                print(f"DEBUG: Syncing allowed emails from {csv_path}...")
+                with open(csv_path, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        email = row.get('email', '').strip().lower()
+                        name = row.get('name', '').strip()
+                        if email:
+                            # Upsert: Insert or Do Nothing (for simplicity in raw SQL)
+                            # Or update name if needed.
+                            # Using raw SQL for speed and to avoid session complexities inside engine.begin()
+                            await conn.execute(text(
+                                "INSERT INTO allowed_emails (email, name) VALUES (:email, :name) "
+                                "ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name"
+                            ), {"email": email, "name": name})
+                print("DEBUG: Allowed emails synced.")
+            else:
+                print(f"DEBUG: CSV {csv_path} not found, skipping sync.")
+            
+        os.makedirs("static/uploads", exist_ok=True)
+        yield
+    except Exception as e:
+        print(f"CRITICAL ERROR during Startup: {e}")
+        raise e
             # ------------------------------------------------------
             
         os.makedirs("static/uploads", exist_ok=True)
@@ -259,6 +282,17 @@ async def delete_post(post_id: int, user: User = Depends(get_current_user), db: 
     if post.user_id != user.id:
         raise HTTPException(403, "Not authorized to delete this post")
         
+    # Manual Cascade Delete (Safe for existing DB without ON DELETE CASCADE)
+    # 1. Delete Likes
+    await db.execute(text("DELETE FROM post_likes WHERE post_id = :pid"), {"pid": post_id})
+    # 2. Delete Collections
+    await db.execute(text("DELETE FROM post_collections WHERE post_id = :pid"), {"pid": post_id})
+    # 3. Delete Notifications
+    await db.execute(text("DELETE FROM notifications WHERE post_id = :pid"), {"pid": post_id})
+    # 4. Delete Comments (and their replies implicitly if parent_id is handled, but assuming flat or handled here)
+    # Note: If comments have replies with parent_id, we might need recursive delete or just delete all with post_id
+    await db.execute(text("DELETE FROM comments WHERE post_id = :pid"), {"pid": post_id})
+
     await db.delete(post)
     await db.commit()
     return {"status": "deleted"}
@@ -1484,6 +1518,45 @@ async def get_suggested_users(user: User = Depends(get_current_user), db: AsyncS
     result = await db.execute(query)
     users = result.scalars().all()
     return users
+
+# --- Image Proxy for Share Poster (CORS Bypass) ---
+import requests
+from fastapi import Response
+
+@app.get("/api/proxy-image")
+async def proxy_image(url: str):
+    try:
+        # Security: Allow only local static or GCS/Google content
+        if not (url.startswith("http") or url.startswith("/static")):
+             raise HTTPException(400, "Invalid URL")
+             
+        # Smart Local Handling to prevent Deadlock
+        # If the URL points to our own static files (localhost or relative)
+        if url.startswith("/static") or "localhost" in url or "127.0.0.1" in url:
+            # Extract path part
+            if "static/uploads" in url:
+                filename = url.split("static/uploads/")[-1]
+                file_path = f"static/uploads/{filename}"
+                if os.path.exists(file_path):
+                    return FileResponse(file_path)
+            elif "/static/" in url: # Other static files
+                 # Simple fallback logic
+                 path_part = url.split("/static/")[-1]
+                 file_path = f"static/{path_part}"
+                 if os.path.exists(file_path):
+                    return FileResponse(file_path)
+
+        # If external URL (GCS, Google User Content)
+        # Verify it's not local to be safe
+        if "localhost" not in url and "127.0.0.1" not in url:
+            resp = requests.get(url, stream=True, timeout=5)
+            return Response(content=resp.content, media_type=resp.headers.get("Content-Type"))
+            
+        raise HTTPException(404, "Image not found locally")
+        
+    except Exception as e:
+        print(f"Proxy failed: {e}")
+        raise HTTPException(404, "Image not found")
 
 # --- Notification Logic ---
 

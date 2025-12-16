@@ -78,14 +78,14 @@ async def import_employees_csv(csv_path: str):
 
 async def main():
     parser = argparse.ArgumentParser(description="Import Allowed Emails from CSV")
-    parser.add_argument('csv_file', type=str, help='Path to CSV file (headers: email, name, department)')
+    # Default to add_employees.csv in the same directory
+    default_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'add_employees.csv')
+    parser.add_argument('csv_file', type=str, nargs='?', default=default_csv, 
+                      help='Path to CSV file (default: ./add_employees.csv)')
     
     args = parser.parse_args()
     
-    if args.csv_file:
-        await import_employees_csv(args.csv_file)
-    else:
-        parser.print_help()
+    await import_employees_csv(args.csv_file)
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -7,13 +7,15 @@
 
 ## 2. Technical Stack
 - **Frontend:** React (Vite) + TypeScript + Tailwind CSS.
-  - **UI Library:** Shadcn UI (Radix) + Framer Motion (for smooth mobile transitions).
-  - **State:** Zustand (Global Context for User & Theme).
-  - **Router:** React Router v6.
+  - **UI Library:** Shadcn UI (Radix) + Framer Motion + Lucide React.
+  - **State:** Zustand (Global Context for User, Theme, & UI Cache).
+  - **Router:** React Router v6 (Hybrid Mode).
+  - **Media:** Yet Another React Lightbox, HTML2Canvas, QRCode.react.
 - **Backend:** Python, FastAPI.
   - **Auth:** Google OAuth2 (OpenID Connect) ONLY. No password storage.
   - **DB:** PostgreSQL (Async) + SQLAlchemy 2.0.
   - **API:** RESTful with Pydantic v2 models.
+  - **Media:** Pillow (Image Optimization & Thumbnails).
 
 ## 3. Design System (Brand DNA)
 - **Primary Colors:** 
@@ -26,4 +28,5 @@
 ## 4. Workflow Mandates
 - **Context-First:** Before adding a feature, check `current_context`.
 - **Zero-Bug Evolution:** New features must be additive. Do not modify existing database schemas destructively.
+- **Production-First Mentality:** Always validate code against cloud environment constraints (Stateless, PostgreSQL compatibility, iOS Viewport) before deployment.
 - **Auth:** Auto-registration on first Google Login (JIT Provisioning). Restrict to company domain.

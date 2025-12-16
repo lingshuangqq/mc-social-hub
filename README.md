@@ -73,6 +73,10 @@ Managed via `deploy.sh` to Google Cloud Run.
 ./deploy.sh
 ```
 
+### 👥 User Administration
+To add new employees to the allowlist without redeploying:
+👉 [See Scripts Documentation](backend/scripts/README.md)
+
 ---
 
 **Master Concept - Connecting People & Ideas**

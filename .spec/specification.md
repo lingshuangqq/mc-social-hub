@@ -52,9 +52,11 @@
 
 ## 7. Explore Page (Topics/Tags)
 - **Purpose:** Discover content by predefined themes or tags.
-- **UI:** Top section with a grid of categorical icons (e.g., Life, Work, Food, Event, Tech), acting as filters.
+- **Official Categories:**
+  - **Grid Icons:** Recommend (Algo), Life, Work, Event, Food, Clubs, Market, Tech, Welfare, Help.
+  - **AI Tagging:** Backend automatically assigns one or more of these tags to new posts.
 - **Content:** Below the category grid, a Masonry Grid displays posts filtered by the selected category.
-- **API:** `GET /api/feed?tag={category_name}`: Filter posts by keyword/tag (matching `ai_keywords`, `title`, or `content`).
+- **API:** `GET /api/feed?tag={category_name}`: Filter posts by keyword/tag.
 
 ## 8. Notifications System
 - **Purpose:** Inform users about interactions (likes, comments, follows, collects).
@@ -90,8 +92,61 @@
 ### 11.2 Component Adaptation
 | Component | Mobile Behavior | Desktop Behavior |
 | :--- | :--- | :--- |
-| **Navigation** | Fixed Bottom Bar | Fixed Left Sidebar |
+| **Navigation** | Fixed Bottom Bar (Safe Area aware) | Fixed Left Sidebar |
 | **Post Feed** | 2-Column Masonry | 3 or 4-Column Masonry |
-| **Post Detail** | Full-screen Page | **Split-Screen Dialog** (Left: Media, Right: Info) |
-| **Create Post** | Full-screen Page | Centered Dialog (Fixed Size) |
-| **Right Sidebar**| Hidden | Visible (Search, Trending, Suggestions) |
+| **Post Detail** | Full-screen Page (Follow btn below image) | **Split-Screen Dialog** (Left: Media, Right: Info) |
+
+### 11.3 Navigation Architecture (Hybrid Deep Linking)
+To ensure optimal performance (zero flickering) while maintaining shareable URLs:
+- **State-Driven Modal:** The Post Detail view is controlled by React State (`selectedPostId`), not React Router.
+- **Manual URL Management:** When opening a post, we use `window.history.pushState` to update the URL to `/post/:id` without triggering a full router transition.
+- **Router Integration:** The `/post/:id` route is defined as a **child route** of the Home Feed. This ensures the `FeedView` remains mounted (Keep-Alive) when accessing a deep link directly.
+- **Scroll Restoration:** Feed scroll position is cached in `useUIStore` and restored on mount.
+
+## 12. Performance & Operations (Phase 7)
+
+### 12.1 Image Optimization
+- **Processing:** All uploads are processed by `Pillow`.
+- **Formats:**
+  - **Original:** WebP, Max Width 1920px, Quality 85.
+  - **Thumbnail:** WebP, Max Width 480px, Quality 70 (suffix `_thumb.webp`).
+- **Loading:** Frontend Grid loads thumbnails by default, Original only on Detail View.
+
+### 12.2 Production Stability
+- **Database Migration:** App implements a `lifespan` check on startup to inspect and auto-patch missing columns (e.g., `ai_keywords`, `bio`) in Cloud SQL, ensuring zero-downtime deployments.
+- **Environment Isolation:** 
+  - **Local:** Uses Vite Proxy for API/Static assets.
+  - **Cloud:** Uses GCS for storage and same-origin API hosting.
+
+## 13. Social Sharing (Phase 8)
+
+### 13.1 Share Poster
+- **Mechanism:** Client-side generation using `html2canvas`.
+- **Content:**
+  - Author Avatar & Name.
+  - Main Image (Adaptive height, max 400px, `object-contain`).
+  - Title & Content (JS truncated to ~80 chars).
+  - Footer: "MC Social Hub" + QR Code (pointing to `/post/:id`).
+- **CORS Handling:**
+  - Backend provides `/api/proxy-image?url=...` endpoint.
+  - Frontend fetches image as Blob URL to prevent "Tainted Canvas" errors.
+  - Smart handling for Localhost (reads file directly) vs External (requests).
+
+### 13.2 Platform Integration
+- **Mobile (iOS/Android):**
+  - Uses `navigator.share({ files: [...] })` to directly share the generated image to WeChat/WhatsApp.
+  - Fallback: "Long press to save".
+- **Desktop:**
+  - "Download" button to save image locally.
+  - "Link" button to copy URL.
+- **WeChat Compatibility:**
+  - **Login:** Detects MicroMessenger UA. If true, displays a full-screen overlay prompting user to "Open in Browser" (bypassing Google Auth restrictions).
+
+## 14. Administration
+
+### 14.1 User Allowlist
+- **Source of Truth:** `backend/scripts/template_employees.csv` (and `add_employees.csv` for incremental).
+- **Automation:**
+  - **Startup Sync:** Application automatically syncs CSV emails to Database on startup (GitOps).
+  - **Manual Script:** `import_employees.py` can be run manually to add users without redeploying.
+- **Documentation:** See `backend/scripts/README.md`.

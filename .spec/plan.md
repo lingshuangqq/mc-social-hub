@@ -1,38 +1,40 @@
 # Implementation Plan: MC Social Hub (As-Built)
 
 ## 1. Backend Architecture (FastAPI)
-- **Stack:** Python 3.12, FastAPI, SQLAlchemy (Async), SQLite (aiosqlite).
+- **Stack:** Python 3.12, FastAPI, SQLAlchemy (Async), SQLite (aiosqlite), **Pillow (Image Processing)**.
 - **Auth:** Google OAuth2 (ID Token verification).
 - **Models:**
   - `User`, `Post`, `Comment` (Self-referential for replies), `PostLike`, `PostCollection`.
+  - **Schema Migration:** Auto-detection logic in `lifespan` startup event.
 - **API Endpoints:**
   - `POST /api/auth/google`: Login/Register.
   - `GET /api/feed`: Main feed.
-  - `POST /api/posts`: Create post.
-  - `POST /api/upload`: Local file upload (`static/uploads`).
+  - `POST /api/posts`: Create post (Auto-compress WebP).
+  - `POST /api/upload`: Local/GCS upload.
   - `GET /api/posts/{id}`: Detail view.
   - `POST /api/posts/{id}/{like|collect|comments}`: Interactions.
   - `GET /api/users/me/{profile|posts|collections}`: User profile data.
+  - `GET /api/discovery/{trending-tags|suggested-users}`: Desktop widgets.
 
 ## 2. Frontend Architecture (React/Vite)
 - **Stack:** React 18, TypeScript, Tailwind CSS, Zustand, Axios.
 - **Layout Strategy:**
   - **Responsive:** JS-based switching using `useMediaQuery`.
-  - **Mobile:** `MobileLayout` (Top Header + Bottom Nav).
+  - **Mobile:** `MobileLayout` (Top Header + Bottom Nav + **Safe Area Support**).
   - **Desktop:** `DesktopLayout` (Left SideNav + Center Content + Right Widgets).
 - **State Management:**
   - `useAuthStore`: Persist User/Token.
   - `App.tsx`: Central controller for Routing and View state (Feed/Explore/Profile).
 - **Key Components:**
-  - `MasonryGrid`: Virtual column layout logic.
-  - `PostDetailModal`: Responsive overlay (Fullscreen on Mobile, Dialog on Desktop).
+  - `MasonryGrid`: Virtual column layout logic (Adaptive 2-4 cols).
+  - `PostDetailModal`: Responsive overlay (Fullscreen on Mobile, Split-Screen on Desktop).
   - `CreatePostModal`: Responsive overlay.
-  - `SideNav`: Desktop navigation.
+  - `SideNav` & `RightSidebar`: Desktop navigation.
 
 ## 3. Database Schema
-- **Users:** `id, email, name, avatar_url, google_sub`
-- **Posts:** `id, user_id, title, content, images (JSON), created_at`
-- **Comments:** `id, post_id, user_id, content, parent_id`
+- **Users:** `id, email, name, avatar_url, google_sub`, `bio`, `title`, `location`.
+- **Posts:** `id, user_id, title, content, images (JSON), created_at`, `ai_keywords`.
+- **Comments:** `id, post_id, user_id, content, parent_id`.
 
 ## Phase 4: Enterprise Ready & Social Engagement (Completed)
 - [x] **Task 4.1: Security & Access Control (Allowlist)**
@@ -75,7 +77,7 @@
   - Implemented "Hot/Recommend" logic in backend (sort by likes count).
   - Fixed Search clear behavior.
 
-## Phase 6: PC Web Adaptation (In Progress)
+## Phase 6: PC Web Adaptation (Completed)
 **Objective:** Provide a first-class experience on desktop browsers without maintaining a separate codebase.
 
 - [x] **Task 6.1: Responsive Layout Architecture**
@@ -90,17 +92,66 @@
   - **Goal:** Modals should look like dialogs, not full pages.
   - **Implementation:**
     - Refactored `CreatePostModal` and `PostDetailModal`.
-    - Desktop: Fixed width/height, rounded corners, centered overlay with backdrop blur.
+    - Desktop: Split-screen dialog (Left: Media, Right: Info) matching Xiaohongshu style.
     - Mobile: Full screen.
 
-- [ ] **Task 6.3: Adaptive Grid**
+- [x] **Task 6.3: Adaptive Grid**
   - **Goal:** Use screen real estate efficiently.
   - **Implementation:**
     - `MasonryGrid`: 2 columns (Mobile) -> 3 columns (Tablet) -> 4 columns (Desktop).
 
-- [ ] **Task 6.4: Right Sidebar Widgets**
+- [x] **Task 6.4: Right Sidebar Widgets**
   - **Goal:** Enhance engagement on desktop.
   - **Implementation:**
     - `UserCard`: Mini profile view.
     - `TrendingTags`: List of popular tags from `api/feed?sort=hot`.
     - `WhoToFollow`: Random recommendation of users not yet followed.
+
+## Phase 7: Optimization & Maintenance (Completed)
+**Objective:** Polish the application for production stability, performance, and consistent UX.
+
+- [x] **Task 7.1: Image Performance**
+  - Backend uses `Pillow` to auto-compress uploads to WebP (max 1920px).
+  - Backend auto-generates `_thumb.webp` thumbnails (max 480px).
+  - Frontend loads thumbnails in Grid view.
+
+- [x] **Task 7.2: Database Operations**
+  - `lifespan` startup script automatically checks and patches missing columns in Cloud SQL (Zero-downtime migration).
+  - Bulk User Allowlist Import via SQL scripts.
+
+- [x] **Task 7.3: Data & UX Consistency**
+  - Unified Tags: `[Life, Work, Event, Food, Clubs, Market, Tech, Welfare, Help]`.
+  - iOS Fix: `100dvh` for bottom bar safety.
+  - [x] Update default placeholder image to branded 4:3 asset.
+
+## Phase 8: Polish & Share (v1.1) (Completed)
+**Objective:** Enable social sharing via deep linking and poster generation, improve brand presence, and fix critical bugs.
+
+- [x] **Task 8.1: Critical Bug Fixes**
+  - Fix: Post deletion failing (Verify Backend API & Frontend integration).
+  - Fix: Feed flickering on navigation (Implemented `useUIStore` with Feed Cache).
+  
+- [x] **Task 8.2: Brand Identity (Favicon & PWA)**
+  - Add `logo.png` as browser favicon.
+  - Implement PWA Manifest and iOS meta tags (optimized for white background).
+
+- [x] **Task 8.3: Deep Linking Architecture**
+  - **Goal:** Support `/post/:id` URL while maintaining the "Modal on Feed" experience.
+  - **Implementation:**
+    - Configure React Router for `/post/:id`.
+    - Implement `useLocation` state to handle "Background Location".
+    - Smart Back Button logic (History check vs. Redirect Home).
+
+- [x] **Task 8.4: Social Sharing (Poster Generation)**
+  - **Goal:** Enable "Share to WeChat" via image poster.
+  - **Tech:** `html2canvas` + `qrcode.react`.
+  - **Backend:** `/api/proxy-image` endpoint to bypass CORS and avoid local deadlocks.
+  - **UI:**
+    - "Send" icon in Post Detail.
+    - **Share Modal:** Generates adaptive height poster.
+    - **Mobile:** "Share Image" button (Native System Share).
+    - **WeChat:** Overlay prompt to "Open in Browser" for Login.
+
+- [x] **Task 8.5: Admin Tools**
+  - Scripts for adding users without redeploy (`import_employees.py` optimized).
+  - GitOps: Auto-sync allowlist from CSV on startup.

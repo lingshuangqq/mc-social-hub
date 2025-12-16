@@ -54,7 +54,7 @@
   - Search clear reset logic.
   - Explore page refresh sync.
 
-## Phase 6: PC Web Adaptation (In Progress)
+## Phase 6: PC Web Adaptation (Completed)
 - [x] **Task 6.1: Responsive Layout Architecture**
   - [x] Implement `useMediaQuery` hook for JS-based responsive logic.
   - [x] Create `MobileLayout` (Header + Content + BottomNav).
@@ -70,3 +70,73 @@
 - [x] **Task 6.4: Right Sidebar Widgets**
   - [x] Backend: Implement `/api/discovery/trending-tags` and `/api/discovery/suggested-users`.
   - [x] Frontend: Implement `RightSidebar` with real data fetching, Search integration, and Follow functionality.
+
+## Phase 7: Optimization & Maintenance (Completed)
+- [x] **Task 7.1: Image Performance Optimization**
+  - [x] Backend: Integrate `Pillow` for image processing.
+  - [x] Backend: Auto-resize originals (max 1920px) and generate thumbnails (max 480px).
+  - [x] Backend: Convert all uploads to WebP format.
+  - [x] Frontend: Update Grid to load `_thumb.webp` with fallback.
+- [x] **Task 7.2: Production Database Stability**
+  - [x] Implement `lifespan` startup check in `main.py` to auto-detect and add missing columns (`ai_keywords`, `bio`, etc.) to Cloud SQL.
+  - [x] Create and execute SQL scripts for bulk user allowlist import.
+- [x] **Task 7.3: UX/UI Polish**
+  - [x] **iOS Viewport Fix**: Use `100dvh` and `pb-safe` to prevent Safari bottom bar overlap.
+  - [x] **Focus Bug Fix**: Refactor React Modals to prevent input loss of focus.
+  - [x] **Mobile Follow Button**: Move button to Author Info row for better usability.
+- [x] **Task 7.4: Data Consistency**
+  - [x] Unify Tags across Frontend (Explore), Backend (AI Prompt), and Create Modal to 9 standard categories.
+  - [x] Update default placeholder image to branded 4:3 asset.
+
+## Phase 8: Polish & Share (v1.1) (Completed)
+- [x] **Task 8.1: Critical Bug Fixes**
+  - [x] Investigate `DELETE /api/posts/{id}` endpoint.
+  - [x] Fix frontend delete action in `PostDetailModal`. (Backend fix applied: manual cascade)
+  - [x] Fix Feed flickering (Implemented Feed Cache in `useUIStore`).
+- [x] **Task 8.2: Brand Identity**
+  - [x] Process `logo.png` and add to `frontend/public/favicon.ico` (and PNGs).
+  - [x] Update `index.html`.
+- [x] **Task 8.3: Deep Linking**
+  - [x] Refactor `App.tsx` routes.
+  - [x] Create `PostDetailView` (standalone page wrapper).
+  - [x] Extract `PostDetailContent` from Modal.
+  - [x] Fix Back Button logic for direct links.
+- [x] **Task 8.4: Share Poster**
+  - [x] Create `ShareModal` component with `html2canvas`.
+  - [x] Implement `/api/proxy-image` backend endpoint.
+  - [x] Add "Send" icon to Post Detail.
+  - [x] Implement "Share Image" (Native) & "Download" buttons.
+  - [x] WeChat Login Overlay.
+- [x] **Task 8.5: Admin Tools**
+  - [x] `import_employees.py` optimization.
+  - [x] Auto-sync CSV on startup.
+
+## Phase 9: Stability & Refinement (v1.2) (Completed)
+**Objective:** Resolve layout shift issues, optimize performance for mobile users (especially iOS), and refine the sharing experience.
+
+- [x] **Task 9.1: Fix Layout Shift (Background Routing)**
+  - **Issue:** Page content would jump/refresh when opening a modal.
+  - **Fix:** Implemented standard **Nested Routing with Background Location** pattern in React Router v6.
+  - **Implementation:**
+    - Refactored `App.tsx` to handle `location.state.backgroundLocation`.
+    - Created dedicated `PostDetailRoute` wrapper.
+    - Updated `FeedView` (removed redundant `Outlet`).
+    - Deleted legacy `GlobalModals` component.
+
+- [x] **Task 9.2: Infinite Scroll Optimization**
+  - **Issue:** "Loading more..." persisted even when no more data was available or data count was small.
+  - **Fix:** 
+    - Increased `PAGE_SIZE` to 20 for better fill.
+    - Added defensive check in `InfiniteScroll` to hide loader if `posts.length < PAGE_SIZE`.
+    - Ensured `hasMore` state in Store is correctly synchronized.
+
+- [x] **Task 9.3: Share Poster Enhancement**
+  - **Performance:** Implemented parallel image loading (`Promise.all`) to speed up generation.
+  - **iOS Fix:** Changed hidden container from `opacity-0` to `fixed left-[-9999px]` to solve blank poster issues on Safari.
+  - **Image Quality:** Switched from `<img>` to `<div>` with `background-image: cover` to fix aspect ratio distortion (stretching).
+  - **Layout:** Limited modal height to `80dvh` with internal scrolling to accommodate mobile address bars.
+  - **Stability:** Tuned generation delay to 300ms for optimal iOS rendering.
+
+- [x] **Task 9.4: Codebase Cleanup**
+  - Fix: TypeScript build errors (missing Store interfaces in `ui.ts`).
+  - Cleanup: Removed unused variables (`navigate`, `memo`) and imports.

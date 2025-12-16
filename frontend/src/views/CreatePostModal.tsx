@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 import { API_BASE_URL } from '../config'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { useUIStore } from '../store/ui'
 
 interface Post {
     id: number
@@ -27,7 +28,9 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
   const [tags, setTags] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const token = useAuthStore(state => state.token)
+  
+  const { token } = useAuthStore()
+  const { triggerFeedRefresh } = useUIStore()
 
   const isEditMode = !!post
   const POST_TAGS = ["Life", "Work", "Event", "Food", "Clubs", "Market", "Tech", "Welfare", "Help"]
@@ -47,48 +50,53 @@ const CreatePostModal = ({ onClose, onSuccess, post }: Props) => {
   }
 
   const handleSubmit = async () => {
-    if (!content.trim() && images.length === 0 && !isEditMode) return
+    if (isSubmitting) return
     setIsSubmitting(true)
-
     try {
-      if (isEditMode) {
-          await axios.put(`${API_BASE_URL}/api/posts/${post.id}`, {
-              title: title,
-              content: content
-          }, {
-              headers: { Authorization: `Bearer ${token}` }
-          })
-      } else {
-          // 1. Upload Images
-          const imageUrls = []
-          for (const file of images) {
-            const formData = new FormData()
-            formData.append('file', file)
-            const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            })
-            imageUrls.push(res.data.url)
-          }
+        let uploadedUrls: string[] = []
 
-          // 2. Create Post
-          const res = await axios.post(`${API_BASE_URL}/api/posts`, {
-            title: title || null,
-            content: content,
-            images: imageUrls,
-            tags: tags
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          
-          onSuccess(res.data.id)
-      }
+        if (!isEditMode) {
+            // Upload images first
+            for (const file of images) {
+                const formData = new FormData()
+                formData.append('file', file)
+                const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+                    headers: { 
+                        'Content-Type': 'multipart/form-data',
+                        Authorization: `Bearer ${token}` 
+                    }
+                })
+                uploadedUrls.push(res.data.url)
+            }
+        }
 
-      onClose()
+        if (isEditMode && post) {
+             await axios.put(`${API_BASE_URL}/api/posts/${post.id}`, {
+                 title, content
+             }, { headers: { Authorization: `Bearer ${token}` }})
+             
+             if (onSuccess) onSuccess(post.id)
+             else onClose()
+
+        } else {
+             // Create
+             const res = await axios.post(`${API_BASE_URL}/api/posts`, {
+                 title, 
+                 content, 
+                 images: uploadedUrls,
+                 tags: tags 
+             }, { headers: { Authorization: `Bearer ${token}` }})
+
+             triggerFeedRefresh() // Trigger Feed Refresh
+             if (onSuccess) onSuccess(res.data.id)
+             else onClose()
+        }
+
     } catch (e) {
-      console.error("Post failed", e)
-      alert("Failed to save. Please try again.")
+        console.error("Post creation failed", e)
+        alert("Failed to post. Please try again.")
     } finally {
-      setIsSubmitting(false)
+        setIsSubmitting(false)
     }
   }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, MapPin, Briefcase, Share2 } from 'lucide-react'
+import { useParams } from 'react-router-dom' // Import useParams
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 import { API_BASE_URL } from '../config'
@@ -36,12 +37,17 @@ interface Props {
     onPostClick: (id: number) => void
 }
 
-const PublicProfileView = ({ userId, onBack, onPostClick }: Props) => {
+const PublicProfileView = ({ userId: propUserId, onBack, onPostClick }: Props) => {
+  const { id } = useParams() // Get ID from URL if available
+  // Use propUserId if valid (>0), otherwise parse URL param
+  const userId = propUserId > 0 ? propUserId : (id ? parseInt(id) : 0)
+
   const [data, setData] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const { token, user: currentUser } = useAuthStore()
 
   useEffect(() => {
+      if (!userId) return
       fetchProfile()
       fetchPosts()
   }, [userId])

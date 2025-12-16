@@ -4,6 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import axios from 'axios'
 import { useAuthStore } from './store/auth'
+import { BrowserRouter } from 'react-router-dom'
 
 // Global 401 Interceptor
 axios.interceptors.response.use(
@@ -19,6 +20,8 @@ axios.interceptors.response.use(
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>,
 )

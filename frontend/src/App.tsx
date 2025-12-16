@@ -1,298 +1,210 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from './store/auth'
+import { useUIStore } from './store/ui'
 import LoginView from './views/LoginView'
-import CreatePostModal from './views/CreatePostModal'
-import PostDetailModal from './views/PostDetailModal'
 import PublicProfileView from './views/PublicProfileView'
 import ProfileView from './views/ProfileView'
 import ExploreView from './views/ExploreView'
-import MasonryGrid from './components/MasonryGrid'
 import SettingsView from './views/SettingsView'
 import NotificationsView from './views/NotificationsView'
+import FeedView from './views/FeedView'
+import PostDetailRoute from './views/PostDetailRoute'
 import axios from 'axios'
 import { API_BASE_URL } from './config'
-import InfiniteScroll from 'react-infinite-scroll-component'
 
 // Layouts & Hooks
 import { useMediaQuery } from './hooks/useMediaQuery'
 import MobileLayout from './layout/MobileLayout'
 import DesktopLayout from './layout/DesktopLayout'
+import CreatePostModal from './views/CreatePostModal'
 
-interface Post {
-    id: number
-    title: string
-    content: string
-    images: string[]
-    likes: number
-    collections: number
-    author: { id: number, name: string, avatar_url: string }
-}
-
-const PAGE_SIZE = 10;
+// Router
+import { Routes, Route, useLocation, useNavigate, Navigate, Location } from 'react-router-dom'
 
 // Define tabs explicitly
 type ActiveTab = 'feed' | 'explore' | 'profile' | 'settings' | 'notifications';
 
 function App() {
-  const user = useAuthStore(state => state.user)
-  const isDesktop = useMediaQuery('(min-width: 768px)') // md breakpoint
+    const { user } = useAuthStore()
+    const { isCreating, setIsCreating } = useUIStore(state => ({
+        isCreating: state.isCreating,
+        setIsCreating: state.setIsCreating
+    }))
 
-  const [isCreating, setIsCreating] = useState(false)
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
-  const [publicProfileId, setPublicProfileId] = useState<number | null>(null)
-  
-  // Feed State
-  const [posts, setPosts] = useState<Post[]>([])
-  const [page, setPage] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
-  
-  const [refreshKey, setRefreshKey] = useState(0)
-  // Explicitly type the state
-  const [activeTab, setActiveTab] = useState<ActiveTab>('feed')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
+    const isDesktop = useMediaQuery('(min-width: 768px)')
 
-  const fetchNotificationsCount = async () => {
-      if (!user) return
-      try {
-          const res = await axios.get(`${API_BASE_URL}/api/notifications?limit=1`, {
-             // We just need the count, limit 1 saves bandwidth
-          })
-          setUnreadCount(res.data.unread_count)
-      } catch (e) {
-          // silent fail
-      }
-  }
+    const location = useLocation()
+    const navigate = useNavigate()
 
-  // Combined Feed & Search Logic
-  useEffect(() => {
-      if (!user) return
+    // --- Background Location Logic ---
+    // This allows us to render the "backing" page (e.g. Feed) even when the URL is /post/123
+    const state = location.state as { backgroundLocation?: Location }
+    const backgroundLocation = state?.backgroundLocation
 
-      // Only auto-load for 'feed' tab here. 'explore' handles its own loading.
-      if (activeTab === 'feed') {
-          if (searchQuery) {
-              setIsSearching(true)
-              axios.get(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`)
-                  .then(res => {
-                      setPosts(res.data)
-                      setHasMore(false) // Search endpoint doesn't support pagination yet
-                  })
-                  .catch(err => console.error(err))
-                  .finally(() => setIsSearching(false))
-          } else {
-              // Load normal feed (init or reset from search)
-              loadPosts(true)
-          }
-          // Poll notifications
-          fetchNotificationsCount()
-      }
-  }, [user, refreshKey, activeTab, searchQuery])
+    const [publicProfileId] = useState<number | null>(null)
+    const [refreshKey, setRefreshKey] = useState(0)
+    const [activeTab, setActiveTab] = useState<ActiveTab>('feed')
+    const [searchQuery, setSearchQuery] = useState('')
+    const [unreadCount, setUnreadCount] = useState(0)
 
-  const loadPosts = async (reset = false) => {
-      if (!user) return
-      
-      const currentPage = reset ? 0 : page
-      const offset = currentPage * PAGE_SIZE
-      
-      try {
-          const res = await axios.get(`${API_BASE_URL}/api/feed?limit=${PAGE_SIZE}&offset=${offset}`)
-          const newPosts = res.data
-          
-          if (reset) {
-              setPosts(newPosts)
-              setPage(1) // Next page is 1
-          } else {
-              setPosts(prev => [...prev, ...newPosts])
-              setPage(prev => prev + 1)
-          }
-          
-          if (newPosts.length < PAGE_SIZE) {
-              setHasMore(false)
-          } else {
-              setHasMore(true)
-          }
-      } catch (e) {
-          console.error("Failed to load feed", e)
-      }
-  }
+    // Sync Tab with URL (ignoring modal URLs if background exists)
+    useEffect(() => {
+        const effectivePath = backgroundLocation ? backgroundLocation.pathname : location.pathname
+        
+        if (effectivePath === '/' || effectivePath.startsWith('/feed')) setActiveTab('feed')
+        else if (effectivePath.startsWith('/explore')) setActiveTab('explore')
+        else if (effectivePath.startsWith('/profile')) setActiveTab('profile')
+        else if (effectivePath.startsWith('/notifications')) setActiveTab('notifications')
+        else if (effectivePath.startsWith('/settings')) setActiveTab('settings')
+    }, [location.pathname, backgroundLocation])
 
-  const handleSearch = async (e?: React.FormEvent) => {
-      e?.preventDefault()
-      // Logic moved to useEffect [searchQuery]
-  }
+    const fetchNotificationsCount = async () => {
+        if (!user) return
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/notifications?limit=1`)
+            setUnreadCount(res.data.unread_count)
+        } catch (e) { }
+    }
 
-  const clearSearch = () => {
-      setSearchQuery('')
-      setRefreshKey(k => k + 1) // Trigger feed reload
-  }
+    useEffect(() => {
+        if (user) fetchNotificationsCount()
+    }, [user])
 
-  const handlePostUpdate = (updatedPost: any) => {
-      setPosts(prev => prev.map(p => {
-          if (p.id === updatedPost.id) {
-              return {
-                  ...p,
-                  ...updatedPost, 
-                  likes: updatedPost.likes !== undefined ? updatedPost.likes : p.likes,
-                  collections: updatedPost.collections !== undefined ? updatedPost.collections : p.collections
-              }
-          }
-          return p
-      }))
-  }
+    const handleSearch = (e?: React.FormEvent) => {
+        e?.preventDefault()
+    }
 
-  if (!user) {
-    return <LoginView />
-  }
+    const clearSearch = () => {
+        setSearchQuery('')
+        setRefreshKey(k => k + 1)
+    }
 
-  // --- View Rendering Logic ---
-  const renderContent = () => {
-      if (selectedPostId) {
-          return (
-               <PostDetailModal 
-                   postId={selectedPostId}
-                   onClose={() => setSelectedPostId(null)}
-                   onDelete={() => {
-                       setPosts(prev => prev.filter(p => p.id !== selectedPostId))
-                       setRefreshKey(k => k + 1) 
-                       setSelectedPostId(null)
-                   }}
-                   onUpdate={handlePostUpdate}
-                   onUserClick={(userId) => {
-                       setSelectedPostId(null)
-                       setPublicProfileId(userId)
-                   }}
-               />
-          )
-      }
-      
-      if (publicProfileId) {
-          return (
-               <PublicProfileView 
-                   userId={publicProfileId}
-                   onBack={() => setPublicProfileId(null)}
-                   onPostClick={setSelectedPostId}
-               />
-          )
-      }
+    const handleTabChange = (tab: ActiveTab) => {
+        setActiveTab(tab)
+        if (tab === 'feed') navigate('/')
+        else if (tab === 'explore') navigate('/explore')
+        else if (tab === 'profile') navigate('/profile')
+        else if (tab === 'notifications') navigate('/notifications')
+        else if (tab === 'settings') navigate('/settings')
+    }
 
-      switch (activeTab) {
-          case 'feed':
-              return (
-                   <div className="p-2">
-                       {isSearching ? (
-                           <div className="flex justify-center py-10">
-                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mc-orange"></div>
-                           </div>
-                       ) : (
-                           <InfiniteScroll
-                                dataLength={posts.length}
-                                next={() => loadPosts(false)}
-                                hasMore={hasMore && !searchQuery}
-                                loader={<div className="text-center py-4 text-xs text-gray-400">Loading more...</div>}
-                                scrollableTarget="scrollableDiv"
-                                endMessage={
-                                    posts.length > 0 && <div className="text-center py-8 text-xs text-gray-300">No more posts</div>
-                                }
-                           >
-                                {posts.length === 0 && !searchQuery ? (
-                                    <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
-                                        <p>No posts yet</p>
-                                        <p className="text-xs mt-1">Be the first to share!</p>
-                                    </div>
-                                ) : (
-                                    <MasonryGrid 
-                                        posts={posts} 
-                                        onPostClick={setSelectedPostId} 
-                                        onUserClick={setPublicProfileId}
-                                    />
-                                )}
-                           </InfiniteScroll>
-                       )}
-                   </div>
-              )
-          case 'explore':
-              return (
-                   <ExploreView 
-                       onPostClick={setSelectedPostId} 
-                       onUserClick={setPublicProfileId}
-                       refreshTrigger={refreshKey}
-                   />
-              )
-          case 'profile':
-              return (
-                   <ProfileView 
-                      onPostClick={setSelectedPostId} 
-                      onSettingsClick={() => setActiveTab('settings')}
-                   />
-              )
-          case 'notifications':
-              return (
-                   <NotificationsView 
-                       onPostClick={setSelectedPostId}
-                   />
-              )
-          case 'settings':
-              return <SettingsView onBack={() => setActiveTab('profile')} />
-          default:
-              return null
-      }
-  }
+    const handlePostClick = useCallback((id: number) => {
+        // Crucial: Pass current location as background state
+        navigate(`/post/${id}`, { state: { backgroundLocation: location } })
+    }, [navigate, location])
 
-  const handleTabChange = (tab: ActiveTab) => {
-      setActiveTab(tab)
-      // Clear all overlay states when switching main tabs
-      setSelectedPostId(null)
-      setPublicProfileId(null)
-      // Also clear settings view if we are navigating away (though activeTab handles that)
-  }
+    const handleUserClick = (id: number) => {
+        navigate(`/users/${id}`)
+    }
 
-  return (
-    <>
-        {isDesktop ? (
-            <DesktopLayout
-                activeTab={activeTab}
-                setActiveTab={handleTabChange}
-                user={user}
-                onAddClick={() => setIsCreating(true)}
-                unreadCount={unreadCount}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSearchSubmit={handleSearch}
-                onUserClick={setPublicProfileId}
-            >
-                {renderContent()}
-            </DesktopLayout>
-        ) : (
-            <MobileLayout
-                activeTab={activeTab}
-                setActiveTab={handleTabChange}
-                user={user}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSearchSubmit={handleSearch}
-                onClearSearch={clearSearch}
-                onAddClick={() => setIsCreating(true)}
-                unreadCount={unreadCount}
-                showHeader={['feed', 'explore'].includes(activeTab) && !selectedPostId && !publicProfileId}
-            >
-                {renderContent()}
-            </MobileLayout>
-        )}
+    if (!user) {
+        return <LoginView />
+    }
 
-        {isCreating && (
-           <CreatePostModal 
-               onClose={() => setIsCreating(false)} 
-               onSuccess={(newPostId) => {
-                   setRefreshKey(k => k + 1)
-                   if (newPostId) {
-                       setSelectedPostId(newPostId)
-                   }
-               }} 
-           />
-       )}
-    </>
-  )
+    // Main Routes: Rendered based on backgroundLocation if present
+    const mainRoutes = (
+        <Routes location={backgroundLocation || location}>
+            <Route path="/" element={
+                <FeedView
+                    searchQuery={searchQuery}
+                    onPostClick={handlePostClick}
+                />
+            } />
+            
+            {/* 
+               If accessed directly (e.g. Refresh on /post/123), backgroundLocation is null.
+               We map /post/:id to FeedView here too, so the Feed renders as the "background".
+               The Modal will ALSO render (via the second Routes block) on top of it.
+            */}
+            <Route path="/post/:id" element={
+                <FeedView
+                    searchQuery={searchQuery}
+                    onPostClick={handlePostClick}
+                />
+            } />
+
+            <Route path="/explore" element={
+                <ExploreView
+                    onPostClick={handlePostClick}
+                    onUserClick={handleUserClick}
+                    refreshTrigger={refreshKey}
+                />
+            } />
+            <Route path="/profile" element={
+                <ProfileView
+                    onPostClick={handlePostClick}
+                    onSettingsClick={() => navigate('/settings')}
+                />
+            } />
+            <Route path="/settings" element={<SettingsView onBack={() => navigate('/profile')} />} />
+            <Route path="/notifications" element={<NotificationsView onPostClick={handlePostClick} />} />
+            <Route path="/users/:id" element={
+                <PublicProfileView
+                    userId={0} // PublicProfileView parses ID from URL usually, or we pass it via params if it supported it.
+                    // But PublicProfileView seems to expect userId prop if embedded, or maybe it parses URL if routed?
+                    // Let's check PublicProfileView implementation.
+                    // It takes `userId` prop. So we need a wrapper if routed.
+                    // Actually, let's wrap it inline:
+                    onBack={() => navigate(-1)}
+                    onPostClick={handlePostClick}
+                />
+            } />
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    )
+
+    return (
+        <>
+            {isDesktop ? (
+                <DesktopLayout
+                    activeTab={activeTab}
+                    setActiveTab={handleTabChange}
+                    user={user}
+                    onAddClick={() => setIsCreating(true)}
+                    unreadCount={unreadCount}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    onSearchSubmit={handleSearch}
+                    onUserClick={handleUserClick}
+                >
+                    {mainRoutes}
+                </DesktopLayout>
+            ) : (
+                <MobileLayout
+                    activeTab={activeTab}
+                    setActiveTab={handleTabChange}
+                    user={user}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    onSearchSubmit={handleSearch}
+                    onClearSearch={clearSearch}
+                    onAddClick={() => setIsCreating(true)}
+                    unreadCount={unreadCount}
+                    showHeader={['feed', 'explore'].includes(activeTab) && !publicProfileId}
+                >
+                    {mainRoutes}
+                </MobileLayout>
+            )}
+
+            {/* Modal Routes: Rendered ON TOP of the layout */}
+            {/* This block ALWAYS uses the real location */}
+            <Routes>
+                <Route path="/post/:id" element={<PostDetailRoute />} />
+            </Routes>
+
+            {isCreating && (
+                <CreatePostModal
+                    onClose={() => setIsCreating(false)}
+                    onSuccess={(newPostId) => {
+                        setRefreshKey(k => k + 1)
+                        if (newPostId) {
+                            navigate(`/post/${newPostId}`, { state: { backgroundLocation: location } })
+                        }
+                    }}
+                />
+            )}
+        </>
+    )
 }
 
 export default App

@@ -12,8 +12,16 @@ declare global {
 const LoginView = () => {
     const login = useAuthStore(state => state.login)
     const [error, setError] = useState<string | null>(null)
+    const [isWeChat, setIsWeChat] = useState(false)
 
     useEffect(() => {
+        // Detect WeChat
+        const ua = navigator.userAgent.toLowerCase()
+        if (ua.match(/MicroMessenger/i) == "micromessenger" as any) {
+            setIsWeChat(true)
+            return
+        }
+
         if (window.google) {
             window.google.accounts.id.initialize({
                 client_id: "961699257299-6vh3d2a6pvq52qg2jl8lpbrtsb2gc4k5.apps.googleusercontent.com",
@@ -41,6 +49,24 @@ const LoginView = () => {
                 setError("Login failed. Please try again.")
             }
         }
+    }
+
+    if (isWeChat) {
+        return (
+            <div className="h-screen flex flex-col items-center justify-center bg-gray-900 text-white px-8 text-center">
+                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
+                    <span className="text-3xl">↗️</span>
+                </div>
+                <h2 className="text-xl font-bold mb-4">Open in Browser</h2>
+                <p className="text-gray-300 leading-relaxed">
+                    Google Login is not supported inside WeChat. 
+                    <br/><br/>
+                    Please tap the menu icon (top right) and select 
+                    <br/>
+                    <span className="font-bold text-white">"Open in Browser"</span>.
+                </p>
+            </div>
+        )
     }
 
     return (
