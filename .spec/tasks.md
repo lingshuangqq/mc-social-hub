@@ -151,3 +151,6 @@
   - **Feature:** Implemented `renderContent` helper to auto-linkify URLs in post details.
   - **Fix:** Added `break-words` class to prevent long URLs/text from overflowing the modal container.
   - **Refactor:** Unified content rendering logic for both Mobile and Desktop layouts to fix `ReferenceError`.
+- [x] **Task 10.3: Fix Search Reset Logic**
+  - **Issue:** Clearing the search input kept previous search results instead of showing the full feed.
+  - **Fix:** Introduced `wasSearchingRef` in `FeedView` to detect transition from search to idle, forcing a feed reload when the query is emptied.
