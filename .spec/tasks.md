@@ -140,3 +140,14 @@
 - [x] **Task 9.4: Codebase Cleanup**
   - Fix: TypeScript build errors (missing Store interfaces in `ui.ts`).
   - Cleanup: Removed unused variables (`navigate`, `memo`) and imports.
+
+## Phase 10: Hotfixes & UX Enhancements (v1.2.1) (Completed)
+**Objective:** Address user-reported bugs and improve content readability.
+
+- [x] **Task 10.1: Fix Modal State Logic**
+  - **Issue:** `CreatePostModal` remained open after successful post creation on some devices.
+  - **Fix:** Explicitly called `setIsCreating(false)` in `App.tsx` success callback to ensure state synchronization.
+- [x] **Task 10.2: Content Rendering Improvements**
+  - **Feature:** Implemented `renderContent` helper to auto-linkify URLs in post details.
+  - **Fix:** Added `break-words` class to prevent long URLs/text from overflowing the modal container.
+  - **Refactor:** Unified content rendering logic for both Mobile and Desktop layouts to fix `ReferenceError`.
