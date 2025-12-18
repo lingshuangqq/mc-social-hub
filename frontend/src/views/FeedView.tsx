@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { API_BASE_URL } from '../config'
@@ -20,6 +20,7 @@ const FeedView = ({ searchQuery, onPostClick }: Props) => {
     const [isSearching, setIsSearching] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const navigate = useNavigate()
+    const wasSearchingRef = useRef(false)
 
     // Restore Scroll on Mount
     useEffect(() => {
@@ -39,6 +40,7 @@ const FeedView = ({ searchQuery, onPostClick }: Props) => {
     useEffect(() => {
         if (searchQuery) {
             // Search bypasses cache
+            wasSearchingRef.current = true
             setIsSearching(true)
             axios.get(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`)
                 .then(res => {
@@ -49,7 +51,8 @@ const FeedView = ({ searchQuery, onPostClick }: Props) => {
                 .finally(() => setIsSearching(false))
         } else {
             // Normal Feed Logic
-            if (feedRefreshKey !== lastFetchKey || feedPosts.length === 0) {
+            if (wasSearchingRef.current || feedRefreshKey !== lastFetchKey || feedPosts.length === 0) {
+                wasSearchingRef.current = false
                 loadPosts(true)
             }
             // Else: use cached data, do nothing
