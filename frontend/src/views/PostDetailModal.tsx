@@ -64,6 +64,21 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
 
     const fetchingRef = useRef<number | null>(null)
 
+    // Helper to render content with links
+    const renderContent = (content: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return content.split(urlRegex).map((part, i) => {
+            if (part.match(urlRegex)) {
+                return (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline break-all" onClick={e => e.stopPropagation()}>
+                        {part}
+                    </a>
+                );
+            }
+            return part;
+        });
+    };
+
     // Swipe Handlers
     const swipeHandlers = useSwipeable({
         // ...
@@ -299,7 +314,9 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
                     </div>
 
                     {post.title && <h1 className="text-lg font-bold text-gray-900 mb-2">{post.title}</h1>}
-                    <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4">{post.content}</p>
+                    <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4 break-words">
+                        {renderContent(post.content)}
+                    </div>
 
                     {post.ai_keywords && (
                         <div className="flex flex-wrap gap-2 mb-4">
