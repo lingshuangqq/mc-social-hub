@@ -1,6 +1,54 @@
-INSERT INTO allowed_emails (email, name, created_at, updated_at)
-VALUES 
-    ('qi.zhuang@hkmci.com', 'Qi Zhuang', NOW(), NOW()),
-    ('steven.zheng@masterconcept.ai', 'Steven Zheng', NOW(), NOW()),
-    ('yankel.yang@hkmci.com', 'Yankel Yang', NOW(), NOW())
-ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('abby.liu@masterconcept.ai', 'Abby Liu Yi 刘一', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('ada.ren@hkmci.com', 'Ada Ren', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('amy.lu@masterconcept.ai', 'Amy Lu 卢倩', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('andersen.huang@hkmci.com', 'Andersen Huang', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('annie.yuen@hkmci.com', 'Annie Yuen', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('arias.han@hkmci.com', 'Arias Han', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('ashley.xiang@hkmci.com', 'Ashley Xiang', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('daniel.hu@hkmci.com', 'Daniel Hu', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('diaz.man@hkmci.com', 'Diaz Man', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('doe.jiang@hkmci.com', 'Doe Jiang 蒋娟', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('eddie.shao@hkmci.com', 'Eddie Shao 邵家松', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('eileen.wong@masterconcept.ai', 'Eileen Wong', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('eric.tang@masterconcept.ai', 'Eric Tang 唐昱佳', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('fish.zhang@hkmci.com', 'Fish Zhang 张江玮', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('hao.yuan@masterconcept.ai', 'Hao Yuan 袁昊', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('harris.zeng@hkmci.com', 'Harris Zeng 曾子桓', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('heather.he@hkmci.com', 'Heather He', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('henry.chen@hkmci.com', 'Henry Chen', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('hunter.tong@hkmci.com', 'Hunter Tong', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('iris.fu@masterconcept.ai', 'Iris Fu 付春瑶', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('james.zhang@hkmci.com', 'James Zhang', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('jamie.xiao@hkmci.com', 'Jamie Xiao 肖志明', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('jason.liang@hkmci.com', 'Jason Liang', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('jason.zhang@masterconcept.ai', 'Jason Zhang', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('jerry.yun@masterconcept.ai', 'Jerry Yun', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('jessie.man@masterconcept.ai', 'Jessie Man', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('jimmy.zhao@hkmci.com', 'Jimmy Zhao 赵掌雄', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('joe.wang@masterconcept.ai', 'Joe Wang 王玲珑', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('judy.liu@hkmci.com', 'Judy Liu 刘潇', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('kenneth.yan@hkmci.com', 'Kenneth Yan 闫永吉', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('kiter.xie@hkmci.com', 'Kiter Xie 谢友宜', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('levie.yang@masterconcept.ai', 'Levie Yang', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('lexi.song@masterconcept.ai', 'Lexi Song 宋璞昱', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('chaoying.liu@hkmci.com', 'Liu Chao Ying 刘超影', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('lora.lei@hkmci.com', 'Lora Lei 雷雨萌', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('mon.tang@hkmci.com', 'Mon Tang', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('peggy.chen@masterconcept.ai', 'Peggy Chen', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('rita.wu@hkmci.com', 'Rita Wu 吴雨桐', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('river.lin@masterconcept.ai', 'River Lin 林超', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('samson.sun@hkmci.com', 'Samson Sun', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('shiyan.xing@masterconcept.ai', 'Shiyan Xing 邢诗研', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('sisley.zeng@masterconcept.ai', 'Sisley Zeng 曾莹', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('sophia.yuen@masterconcept.ai', 'Sophia Yuen', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('steven.zheng@masterconcept.ai', 'Steven Zheng 郑煜文', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('summer.wang@hkmci.com', 'Summer Wang 王国晶', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('tracy.jiang@hkmci.com', 'Tracy Jiang', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('vanchale.lu@hkmci.com', 'Vanchale Lu', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('vivi.zhang@masterconcept.ai', 'Vivi Zhang 张艳', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('wenquan.tou@masterconcept.ai', 'Wenquan Tou 钭文泉', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('xinyu.li@masterconcept.ai', 'Xinyu Li 李昕昱', 'Master Concept') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('yankel.yang@hkmci.com', 'Yankel Yang 杨美志', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('zp.chen@hkmci.com', 'ZP Chen', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('qi.zhuang@hkmci.com', 'Zhuang Qi 庄琪', 'HKMCI') ON CONFLICT (email) DO NOTHING;
+INSERT INTO allowed_emails (email, name, department) VALUES ('zivy.zhang@masterconcept.ai', 'Zivy Zhang', 'Master Concept') ON CONFLICT (email) DO NOTHING;

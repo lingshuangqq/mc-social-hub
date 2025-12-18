@@ -196,6 +196,7 @@ function App() {
                 <CreatePostModal
                     onClose={() => setIsCreating(false)}
                     onSuccess={(newPostId) => {
+                        setIsCreating(false) // Close the modal first!
                         setRefreshKey(k => k + 1)
                         if (newPostId) {
                             navigate(`/post/${newPostId}`, { state: { backgroundLocation: location } })

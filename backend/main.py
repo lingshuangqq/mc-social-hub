@@ -159,7 +159,10 @@ async def lifespan(app: FastAPI):
             # ------------------------------------------------------
             # --- Auto-Sync Allowed Emails from CSV (GitOps) ---
             # ------------------------------------------------------
-            csv_path = "scripts/template_employees.csv"
+            csv_path = "scripts/add_employees.csv"
+            if not os.path.exists(csv_path):
+                csv_path = "scripts/template_employees.csv"
+
             if os.path.exists(csv_path):
                 print(f"DEBUG: Syncing allowed emails from {csv_path}...")
                 with open(csv_path, 'r', encoding='utf-8') as f:
