@@ -497,7 +497,9 @@ const PostDetailModal = ({ postId, onClose, onDelete, onUpdate, onUserClick }: P
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                     {post.title && <h1 className="text-xl font-bold text-gray-900 mb-3 leading-snug">{post.title}</h1>}
-                    <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4">{post.content}</p>
+                    <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4 break-words">
+                        {renderContent(post.content)}
+                    </div>
 
                     {post.ai_keywords && (
                         <div className="flex flex-wrap gap-2 mb-4">
